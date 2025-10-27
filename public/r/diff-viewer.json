@@ -1,0 +1,19 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "diff-viewer",
+  "type": "registry:component",
+  "title": "Diff Viewer",
+  "description": "A diff viewer component",
+  "registryDependencies": [
+    "button",
+    "collapsible-card",
+    "diff"
+  ],
+  "files": [
+    {
+      "path": "registry/blocks/diff-viewer/diff-viewer.tsx",
+      "content": "import { Diff } from \"@/registry/ui/diff\";\nimport { EXAMPLE_DIFF } from \"./data\";\nimport { CollapsibleCard as Card } from \"@/registry/ui/collapsible-card\";\n\nexport function DiffViewer() {\n  return (\n    <Card.Root\n      data-section-id=\"diff-viewer\"\n      id=\"diff-viewer\"\n      className=\"my-8 text-[13px]\"\n    >\n      <Card.Header>\n        <Card.Title>File Changes</Card.Title>\n      </Card.Header>\n      <Card.Content>\n        <Diff\n          fileName=\"file-changes.tsx\"\n          patch={EXAMPLE_DIFF}\n          status=\"modified\"\n          selectable={false}\n        />\n      </Card.Content>\n    </Card.Root>\n  );\n}\n",
+      "type": "registry:component"
+    }
+  ]
+}

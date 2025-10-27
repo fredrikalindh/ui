@@ -10,14 +10,18 @@
     "registry:build": "shadcn build"
   },
   "dependencies": {
+    "@radix-ui/react-collapsible": "^1.1.12",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "diff": "^8.0.2",
     "lucide-react": "^0.487.0",
     "next": "15.5.2",
+    "parse-diff": "^0.11.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "refractor": "^5.0.0",
     "shadcn": "^3.0.0",
     "tailwind-merge": "^3.3.1",
     "tw-animate-css": "^1.3.6",
