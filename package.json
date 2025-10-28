@@ -26,7 +26,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "diff": "^8.0.2",
-    "diff-match-patch": "^1.0.5",
     "fumadocs-core": "^16.0.4",
     "fumadocs-mdx": "^13.0.2",
     "fumadocs-ui": "^16.0.4",
@@ -48,7 +47,6 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@tailwindcss/postcss": "^4.1.11",
-    "@types/diff-match-patch": "^1.0.36",
     "@types/node": "^20.19.9",
     "@types/react": "19.1.2",
     "@types/react-dom": "19.1.2",

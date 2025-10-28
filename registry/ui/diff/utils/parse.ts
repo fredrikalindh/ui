@@ -4,12 +4,8 @@ import gitDiffParser, {
   Change as _Change,
   DeleteChange,
   InsertChange,
-  NormalChange,
 } from "gitdiff-parser";
-import DiffMatchPatch from "diff-match-patch";
 import { diffChars, diffWords } from "diff";
-
-const dmp = new DiffMatchPatch();
 
 export interface LineSegment {
   value: string;
@@ -57,17 +53,13 @@ const changeRatio = (a: string, b: string): number => {
   return totalChars === 0 ? 1 : changedChars / totalChars;
 };
 
-/**
- * Heuristic: determine whether two lines are similar enough to be considered a
- * modification rather than a deletion + insertion.
- */
 const isSimilar = (
   a: string,
   b: string,
   similarityThreshold: number
 ): boolean => {
   if (similarityThreshold === 1) return true;
-  // Treat lines that differ only by trailing whitespace as identical
+
   if (a.trimEnd() === b.trimEnd()) return true;
 
   return changeRatio(a, b) < similarityThreshold;
@@ -83,30 +75,6 @@ const changeToLine = (change: _Change): Line => {
       },
     ],
   };
-};
-
-enum ParsedType {
-  Delete = -1,
-  Normal = 0,
-  Insert = 1,
-}
-
-// TODO: replace with https://www.npmjs.com/package/diff-match-patch - not better
-const lineMergeWithGitDiffParser = (
-  current: _Change,
-  next: _Change
-): Line["content"] => {
-  const diff = dmp.diff_main(current.content, next.content);
-  dmp.diff_cleanupSemantic(diff);
-  return diff.map(([type, value]: [type: ParsedType, value: string]) => ({
-    type:
-      type === ParsedType.Normal
-        ? "normal"
-        : type === ParsedType.Insert
-        ? "insert"
-        : "delete",
-    value: value,
-  }));
 };
 
 function roughlyEqual(
