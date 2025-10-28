@@ -4,7 +4,7 @@ description: An opinionated simple diff viewer for React.
 ---
 
 import { DiffViewer } from "@/registry/blocks/diff-viewer/diff-viewer";
-import { EXAMPLE_DIFF, SIMPLE_DIFF, DISSIMILAR_DIFF } from '@/registry/blocks/diff-viewer/data';
+import { EXAMPLE_DIFF, SIMPLE_DIFF, DISSIMILAR_DIFF, MIXED_DIFF, MIXED_DIFF2 } from '@/registry/blocks/diff-viewer/data';
 
 
 <DiffViewer patch={EXAMPLE_DIFF} />
@@ -51,7 +51,7 @@ With merging of adjacent deleted and inserted lines, we can make it more readabl
 
 Without any other logic, it will not be chaotic when the lines are very different:
 
-<DiffViewer patch={DISSIMILAR_DIFF} options={{ similarityThreshold: 0 }} />
+<DiffViewer patch={DISSIMILAR_DIFF} options={{ similarityThreshold: 1 }} />
 
 We can add a similarity threshold to the diff parser to merge lines that are similar.
 
@@ -72,7 +72,7 @@ In even more complex cases, we might want to merge lines that are similar but no
     <DiffViewer patch={EXAMPLE_DIFF} options={{ mergeModifiedLines: true, maxDiffDistance: 1 }} />
   </TabsContent>
   <TabsContent value="Similar">
-    <DiffViewer patch={EXAMPLE_DIFF} options={{ mergeModifiedLines: false,  maxDiffDistance: 10 }} />
+    <DiffViewer patch={EXAMPLE_DIFF} />
   </TabsContent>
 </Tabs>
 

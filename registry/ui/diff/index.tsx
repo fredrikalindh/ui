@@ -145,7 +145,7 @@ const Line: React.FC<{
     line.type === "insert" ? "ins" : line.type === "delete" ? "del" : "span";
 
   const lineNumberNew =
-    line.type === "normal" ? line.oldLineNumber : line.lineNumber;
+    line.type === "normal" ? line.newLineNumber : line.lineNumber;
   const lineNumberOld = line.type === "normal" ? line.oldLineNumber : undefined;
 
   return (
@@ -169,7 +169,7 @@ const Line: React.FC<{
         })}
       />
       <td className="tabular-nums text-center opacity-50 px-2 text-xs select-none">
-        {lineNumberNew ?? "–"}
+        {line.type === "delete" ? "–" : lineNumberNew}
       </td>
       <td className="text-nowrap pr-6">
         <Tag>

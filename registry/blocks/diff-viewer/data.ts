@@ -84,6 +84,7 @@ index 3facda6..82485f0 100644
 @@ -1,3 +1,3 @@
 -import { useState, useRef } from 'react';
 +import { useRef, useEffect } from 'react';
+ 
 -const Inpt = () => {
 +const Input = () => {
 `;
@@ -96,3 +97,64 @@ index 3facda6..82485f0 100644
 -import { useState, useRef } from 'react';
 +const Input = () => {
 `;
+
+export const MIXED_DIFF = `diff --git a/file-changes.tsx b/file-changes.tsx
+index 1234567..2345678 100644
+--- a/file-changes.tsx
++++ b/file-changes.tsx
+@@ -95,18 +95,24 @@ const DiffViewer = ({
+   return (
+     <Card.Root data-section-id={id} id={id}>
+-        {file?.status === "insert" ? (
+-          <Badge variant="success">New</Badge>
+-        ) : file?.status === "deleted" ? (
++
++        {file?.status === "insert" && <Badge variant="success">New</Badge>}
++        {file?.status === "delete" && (
+           <Badge variant="destructive">Deleted</Badge>
+-        ) : null}
+-        <span className="text-xs tabular-nums">
+-          <span className="text-green-600">+{additions}</span>
+-          <span className="text-red-600">-{deletions}</span>
+-        </span>
++        )}
++        {file?.status === "modified" && (
++          <span className="text-xs tabular-nums">
++            <span className="text-green-600">+{additions}</span>
++            <span className="text-red-600">-{deletions}</span>
++          </span>
++        )}
+`;
+// export const MIXED_DIFF2 = `diff --git a/file-changes.tsx b/file-changes.tsx
+// index 1234567..2345678 100644
+// --- a/file-changes.tsx
+// +++ b/file-changes.tsx
+// @@ -1,1 +1,5 @@
+// -<Card.Root data-section-id={id} id={id}>
+// +<Card.Root
+// +  data-section-id={id}
+// +  id={id}
+// +  defaultOpen={file.status !== "delete"}
+// +>
+// `;
+export const MIXED_DIFF2 = `diff --git a/file-changes.tsx b/file-changes.tsx
+index 1234567..2345678 100644
+--- a/file-changes.tsx
++++ b/file-changes.tsx
+@@ -257,7 +257,7 @@ export const FileChanges = ({ prMeta, files, prId }: FileChangesProps) => {
+         )}
+       </div>
+-      <div className="space-y-4 mx-auto flex flex-col gap-4 overflow-visible flex-1 py-16 pr-24 max-w-4xl">
++      <div className="space-y-4 mx-auto flex flex-col gap-4 overflow-visible flex-1 py-16 max-w-4xl">
+         <h1
+           className="text-xl font-medium mb-2 mt-4 first:mt-0"
+           id={slugify(displayTitle)}`;
+// export const MIXED_DIFF2 = `diff --git a/file-changes.tsx b/file-changes.tsx
+// index 1234567..2345678 100644
+// --- a/file-changes.tsx
+// +++ b/file-changes.tsx
+// @@ -1,1 +1,3 @@
+// +<Component
+// +  prop="value"
+// +/>
+// -<Component prop="value" />`;

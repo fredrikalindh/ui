@@ -2,6 +2,9 @@ import gitDiffParser, {
   Hunk as _Hunk,
   File as _File,
   Change as _Change,
+  DeleteChange,
+  InsertChange,
+  NormalChange,
 } from "gitdiff-parser";
 import DiffMatchPatch from "diff-match-patch";
 import { diffChars, diffWords } from "diff";
@@ -38,7 +41,6 @@ export interface File extends Omit<_File, "hunks"> {
 export interface ParseOptions {
   maxDiffDistance: number;
   similarityThreshold: number;
-  zipChanges?: boolean;
   mergeModifiedLines: boolean;
 }
 
@@ -64,57 +66,24 @@ const isSimilar = (
   b: string,
   similarityThreshold: number
 ): boolean => {
-  if (similarityThreshold === 0) return true;
-  // Don't pair empty/whitespace-only lines
-  // if (a.trim().length === 0 || b.trim().length === 0) return false;
-
+  if (similarityThreshold === 1) return true;
   // Treat lines that differ only by trailing whitespace as identical
   if (a.trimEnd() === b.trimEnd()) return true;
 
   return changeRatio(a, b) < similarityThreshold;
 };
 
-// TODO: segments for modified lines with https://www.npmjs.com/package/diff-match-patch
-const parseLine = (line: _Change): LineSegment[] => {
-  return [
-    {
-      value: line.content,
-      type: "normal",
-    },
-  ];
+const changeToLine = (change: _Change): Line => {
+  return {
+    ...change,
+    content: [
+      {
+        value: change.content,
+        type: "normal",
+      },
+    ],
+  };
 };
-
-export function zipChanges(changes: _Change[]) {
-  const [result] = changes.reduce<[_Change[], _Change | null, number]>(
-    ([result, last, lastDeletionIndex], current, i) => {
-      if (!last) {
-        result.push(current);
-        return [result, current, current.type === "delete" ? i : -1];
-      }
-
-      if (current.type === "insert" && lastDeletionIndex >= 0) {
-        result.splice(lastDeletionIndex + 1, 0, current);
-        // The new `lastDeletionIndex` may be out of range, but `splice` will fix it
-        return [result, current, lastDeletionIndex + 2];
-      }
-
-      result.push(current);
-
-      // Keep the `lastDeletionIndex` if there are lines of deletions,
-      // otherwise update it to the new deletion line
-      const newLastDeletionIndex =
-        current.type === "delete"
-          ? last?.type === "delete"
-            ? lastDeletionIndex
-            : i
-          : i;
-
-      return [result, current, newLastDeletionIndex];
-    },
-    [[], null, -1]
-  );
-  return result;
-}
 
 enum ParsedType {
   Delete = -1,
@@ -211,76 +180,212 @@ const modifiedContent = (current: _Change, next: _Change): Line["content"] => {
   return result;
 };
 
+const mergeAdjacentLines = (
+  changes: _Change[],
+  options: ParseOptions
+): Line[] => {
+  const n = changes.length;
+  const out: Line[] = [];
+  for (let i = 0; i < n; i++) {
+    const c = changes[i];
+    if (!c) continue;
+    if (
+      c.type === "delete" &&
+      changes[i + 1]?.type === "insert" &&
+      isSimilar(c.content, changes[i + 1]!.content, options.similarityThreshold)
+    ) {
+      out.push({
+        ...c,
+        type: "normal",
+        isNormal: true,
+        oldLineNumber: (c as DeleteChange).lineNumber,
+        newLineNumber: (changes[i + 1] as InsertChange).lineNumber,
+        content: modifiedContent(c, changes[i + 1]!),
+      });
+      i++;
+    } else {
+      out.push(changeToLine(c));
+    }
+  }
+
+  return out;
+};
+
 const mergeModifiedLines = (
   changes: _Change[],
   options: ParseOptions
 ): Line[] => {
-  const result: Line[] = [];
-  // - [x] stupid version of this deletion followed by an addition is a modified line
-  // - [ ] match line numbers
-  // - [ ] handle multiple consecutive deletions and insertions
-  for (let i = 0; i < changes.length; i++) {
-    const current = changes[i];
-    const next = changes[i + 1];
+  const n = changes.length;
 
-    if (
-      current.type === "delete" &&
-      next?.type === "insert" &&
-      isSimilar(current.content, next.content, options.similarityThreshold)
-    ) {
-      const content = modifiedContent(current, next);
-      result.push({
-        type: "normal",
-        isNormal: true,
-        oldLineNumber: current.lineNumber,
-        newLineNumber: next.lineNumber,
-        content: content,
-      });
-      i++;
-    } else {
-      result.push({
-        ...changes[i],
-        content: parseLine(changes[i]),
-      });
+  // Build index lists for valid inserts/deletes
+  const addIdxs: number[] = [];
+  const delIdxs: number[] = [];
+  changes.forEach((c, i) => {
+    if (!c) return;
+    if (c.type === "insert") addIdxs.push(i);
+    else if (c.type === "delete") delIdxs.push(i);
+  });
+
+  // Helper to calculate line distance between changes
+  const getLineDistance = (del: DeleteChange, add: InsertChange): number => {
+    const minLine = Math.min(del.lineNumber, add.lineNumber);
+    const maxLine = Math.max(del.lineNumber, add.lineNumber);
+
+    return Math.abs(maxLine - minLine);
+  };
+
+  // Track pairings: -1 means unpaired
+  const pairOfDel = new Int32Array(n).fill(-1);
+  const pairOfAdd = new Int32Array(n).fill(-1);
+  const pairedAdd = new Set<number>();
+  const pairedDelSnapshot = new Set<number>();
+
+  // Find best matching insert for each delete
+  delIdxs.forEach((di) => {
+    const del = changes[di] as DeleteChange;
+
+    const bestMatch: { idx: number; ratio: number } = addIdxs.reduce(
+      (best, ai) => {
+        const add = changes[ai] as InsertChange;
+
+        if (getLineDistance(del, add) > options.maxDiffDistance) return best;
+
+        if (!isSimilar(del.content, add.content, options.similarityThreshold))
+          return best;
+
+        const ratio = changeRatio(del.content, add.content);
+        return ratio < best.ratio ? { idx: ai, ratio } : best;
+      },
+      { idx: -1, ratio: Infinity }
+    );
+
+    if (bestMatch.idx !== -1) {
+      pairOfDel[di] = bestMatch.idx;
+      pairOfAdd[bestMatch.idx] = di;
+      pairedAdd.add(bestMatch.idx);
+      pairedDelSnapshot.add(di);
     }
-  }
+  });
 
-  return result;
+  // Build prefix sum for unpaired delete detection
+  const unpairedDelPrefix = new Int32Array(n + 1);
+  changes.forEach((c, i) => {
+    const isUnpairedDelete = c.type === "delete" && !pairedDelSnapshot.has(i);
+    unpairedDelPrefix[i + 1] =
+      unpairedDelPrefix[i] + (isUnpairedDelete ? 1 : 0);
+  });
+
+  const hasUnpairedDeleteBetween = (start: number, end: number) =>
+    unpairedDelPrefix[end] - unpairedDelPrefix[Math.max(0, start)] > 0;
+
+  // Process changes and build output
+  const processed = new Set<number>();
+  const out: Line[] = [];
+
+  const emitNormal = (c: _Change) => {
+    out.push(changeToLine(c));
+  };
+
+  const emitModified = (delIdx: number, addIdx: number) => {
+    const del = changes[delIdx] as DeleteChange;
+    const add = changes[addIdx] as InsertChange;
+    out.push({
+      oldLineNumber: del.lineNumber,
+      newLineNumber: add.lineNumber,
+      type: "normal",
+      isNormal: true,
+      content: modifiedContent(del, add),
+    });
+    processed.add(delIdx).add(addIdx);
+  };
+
+  // Main processing loop
+  changes.forEach((c, i) => {
+    if (!c || processed.has(i)) return;
+
+    if (c.type === "normal") {
+      processed.add(i);
+      emitNormal(c);
+      return;
+    }
+
+    if (c.type === "delete") {
+      const pairedAddIdx = pairOfDel[i];
+
+      if (pairedAddIdx === -1) {
+        // No pair - emit as delete
+        processed.add(i);
+        emitNormal(c);
+        return;
+      }
+
+      if (pairedAddIdx > i) {
+        const shouldUnpair = hasUnpairedDeleteBetween(i + 1, pairedAddIdx);
+
+        if (shouldUnpair) {
+          // Unpair and emit as delete
+          pairedAdd.delete(pairedAddIdx);
+          pairOfAdd[pairedAddIdx] = -1;
+          pairOfDel[i] = -1;
+          processed.add(i);
+          emitNormal(c);
+        } else {
+          // Defer - will be handled when we reach the insert
+          processed.add(i);
+        }
+      } else {
+        // Paired insert already seen - emit modified
+        emitModified(i, pairedAddIdx);
+      }
+      return;
+    }
+
+    if (c.type === "insert") {
+      if (!pairedAdd.has(i)) {
+        // Unpaired insert
+        processed.add(i);
+        emitNormal(c);
+      } else {
+        // Paired - emit modified if not already done
+        const pairedDelIdx = pairOfAdd[i];
+        if (pairedDelIdx !== -1 && !processed.has(i)) {
+          emitModified(pairedDelIdx, i);
+        }
+      }
+    }
+  });
+
+  return out;
 };
 
-// TODO: merge modified lines
 const parseHunk = (hunk: _Hunk, options: ParseOptions): Hunk => {
   if (options.mergeModifiedLines) {
     return {
       ...hunk,
       type: "hunk",
-      lines: mergeModifiedLines(hunk.changes, options),
+      lines:
+        options.maxDiffDistance === 1
+          ? mergeAdjacentLines(hunk.changes, options)
+          : mergeModifiedLines(hunk.changes, options),
     };
   }
-
-  const changes = options.zipChanges ? zipChanges(hunk.changes) : hunk.changes;
 
   return {
     ...hunk,
     type: "hunk",
-    lines: changes.map(
-      (change): Line => ({
-        ...change,
-        content: parseLine(change),
-      })
-    ),
+    lines: hunk.changes.map(changeToLine),
   };
 };
 
 const insertSkipBlocks = (hunks: Hunk[]): (Hunk | SkipBlock)[] => {
   const result: (Hunk | SkipBlock)[] = [];
   let skipId = 0;
-  let lastHunkLine = 0;
+  let lastHunkLine = 1;
 
   for (const hunk of hunks) {
-    const distanceToLastHunk = hunk.oldStart - lastHunkLine - 1;
+    const distanceToLastHunk = hunk.oldStart - lastHunkLine;
 
-    if (distanceToLastHunk > 1) {
+    if (distanceToLastHunk > 0) {
       result.push({
         id: skipId++,
         count: distanceToLastHunk,
@@ -295,15 +400,14 @@ const insertSkipBlocks = (hunks: Hunk[]): (Hunk | SkipBlock)[] => {
 };
 
 const defaultOptions: ParseOptions = {
-  maxDiffDistance: 6,
+  maxDiffDistance: 30,
   similarityThreshold: 0.45,
-  zipChanges: false,
   mergeModifiedLines: true,
 };
 
 export const parseDiff = (
   diff: string,
-  options: Partial<ParseOptions>
+  options?: Partial<ParseOptions>
 ): File[] => {
   const opts = { ...defaultOptions, ...options };
   const files = gitDiffParser.parse(diff);

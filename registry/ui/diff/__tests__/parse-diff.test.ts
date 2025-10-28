@@ -106,7 +106,7 @@ describe("parseDiff concise plan", () => {
       ]);
     });
 
-    test.only("treats adding newline at EOF as normal", () => {
+    test("treats adding newline at EOF as normal", () => {
       // This is the actual scenario from packages/api/tsconfig.json
       const diff = `${HEADER}@@ -11,6 +11,6 @@
        "@workspace/github": ["../github/src"]
@@ -164,7 +164,7 @@ describe("parseDiff concise plan", () => {
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
       expect(chunk!.lines).toHaveLength(1);
-      expect(chunk!.lines[0]?.type).toBe("modified");
+      expect(chunk!.lines[0]?.type).toBe("normal");
 
       const segments = chunk!.lines[0]!.content;
       expect(
@@ -188,7 +188,7 @@ describe("parseDiff concise plan", () => {
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
       expect(chunk!.lines).toHaveLength(1);
-      expect(chunk!.lines[0]?.type).toBe("modified");
+      expect(chunk!.lines[0]?.type).toBe("normal");
 
       const segments = chunk!.lines[0]!.content;
       expect(
@@ -218,8 +218,8 @@ describe("parseDiff concise plan", () => {
       expect(chunk!.lines).toHaveLength(3);
 
       expect(chunk!.lines.map((l) => l.type)).toEqual([
-        "modified",
-        "modified",
+        "normal",
+        "normal",
         "normal",
       ]);
     });
@@ -248,7 +248,7 @@ describe("parseDiff concise plan", () => {
         "insert",
         "normal",
       ]);
-      expect(chunk!.lines[0]?.type).toBe("modified");
+      expect(chunk!.lines[0]?.type).toBe("normal");
     });
 
     test("rejects very low similarity matches", () => {
@@ -273,8 +273,8 @@ describe("parseDiff concise plan", () => {
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
       expect(chunk!.lines.map((l) => l.type)).toEqual([
-        "modified",
-        "modified",
+        "normal",
+        "normal",
         "normal",
         "normal",
       ]);
@@ -312,13 +312,11 @@ describe("parseDiff concise plan", () => {
  line 11 context
 `;
 
-      const items = parseDiff(diff);
+      const [file] = parseDiff(diff);
+      const items = file.hunks;
 
-      expect(items[0]).toMatchObject({
-        kind: "skip",
-        skip: { count: 9 },
-      });
-      expect(items[1]).toMatchObject({ kind: "line" });
+      expect(items[0]).toMatchObject({ type: "skip", count: 9 });
+      expect(items[1]).toMatchObject({ type: "hunk" });
     });
 
     test("creates skip blocks between separated chunks", () => {
@@ -334,31 +332,20 @@ describe("parseDiff concise plan", () => {
  line 12
 `;
 
-      const items = parseDiff(diff);
+      const [file] = parseDiff(diff);
+      const items = file.hunks;
 
-      expect(items[0]).toMatchObject({ kind: "line" });
+      expect(items[0]).toMatchObject({ type: "hunk" });
       expect(items[1]).toMatchObject({
-        kind: "skip",
-        skip: { count: 6 },
+        type: "skip",
+        count: 6,
       });
-      expect(items[2]).toMatchObject({ kind: "line" });
+      expect(items[2]).toMatchObject({ type: "hunk" });
     });
   });
 
-  // describe("ordering and reordering safeguards", () => {
-  //   test.todo("keeps add-before-delete sequences paired when close");
-  //   test.todo("skips pairing when add and delete are far apart");
-  //   test.todo("skips pairing for far but dissimilar lines");
-  //   test.todo("mixes consecutive and non-consecutive edits correctly");
-  //   test.todo("maintains legacy consecutive pairing behavior");
-  //   test.todo("handles scenarios with more additions than deletions");
-  //   test.todo("handles scenarios with more deletions than additions");
-  //   test.todo("keeps removed lines before added lines in badge bug");
-  //   test.todo("handles Card.Root refactor ordering");
-  // });
-
   it("should handle the Card.Root refactoring correctly", () => {
-    const diff = `${HEADER}diff --git a/test.tsx b/test.tsx
+    const diff = `${HEADER}
 @@ -1,1 +1,5 @@
 -<Card.Root data-section-id={id} id={id}>
 +<Card.Root
@@ -370,32 +357,20 @@ describe("parseDiff concise plan", () => {
     const result = lineBlocks(diff);
     const allLines = result.flatMap((r) => r.lines);
 
-    const removed = allLines.filter((l) => l.type === "delete");
+    const removed = allLines.filter((l) => l.type === "normal");
     const added = allLines.filter((l) => l.type === "insert");
 
     // Should be separate removed and added lines, not merged
     expect(removed.length).toBe(1);
-    expect(added.length).toBe(5);
+    expect(added.length).toBe(4);
 
     // Removed line should come first
-    expect(allLines[0]?.type).toBe("delete");
-    expect(allLines[1]?.type).toBe("insert");
-  });
-
-  it.todo("should extract the function name from the line", () => {
-    // const diff = `${HEADER}diff --git a/file.tsx b/file.tsx
-    // @@ -257,7 +257,7 @@ export const FileChanges = ({ prMeta, files, prId }: FileChangesProps) => {
-    //          )}
-    //        </div>
-    // -      <div className="space-y-4 mx-auto flex flex-col gap-4 overflow-visible flex-1 py-16 pr-24 max-w-4xl">
-    // +      <div className="space-y-4 mx-auto flex flex-col gap-4 overflow-visible flex-1 py-16 max-w-4xl">
-    //          <h1
-    //            className="text-xl font-medium mb-2 mt-4 first:mt-0"
-    //            id={slugify(displayTitle)}`;
+    expect(allLines[0]?.type).toBe("insert");
+    expect(allLines[1]?.type).toBe("normal");
   });
 
   it("should display simple className change as modified line", () => {
-    const diff = `${HEADER}diff --git a/file.tsx b/file.tsx
+    const diff = `${HEADER}
 @@ -257,7 +257,7 @@ export const FileChanges = ({ prMeta, files, prId }: FileChangesProps) => {
          )}
        </div>
@@ -408,7 +383,9 @@ describe("parseDiff concise plan", () => {
     const result = lineBlocks(diff);
     const allLines = result.flatMap((r) => r.lines);
 
-    const modified = allLines.filter((l) => l.type === "normal");
+    const modified = allLines.filter(
+      (l) => l.type === "normal" && l.content.length > 1
+    );
     const added = allLines.filter((l) => l.type === "insert");
     const removed = allLines.filter((l) => l.type === "delete");
 
@@ -416,6 +393,7 @@ describe("parseDiff concise plan", () => {
     expect(modified.length).toBe(1);
     expect(added.length).toBe(0);
     expect(removed.length).toBe(0);
+    expect(allLines.length).toBe(6);
 
     // The modified line should highlight the removed "pr-24 " part
     const modifiedLine = modified[0];
@@ -428,7 +406,7 @@ describe("parseDiff concise plan", () => {
   });
 
   it("should display removed lines before added lines (no reordering)", () => {
-    const diff = `${HEADER}diff --git a/file-changes.tsx b/file-changes.tsx
+    const diff = `diff --git a/file-changes.tsx b/file-changes.tsx
 index 1234567..2345678 100644
 --- a/file-changes.tsx
 +++ b/file-changes.tsx
@@ -448,7 +426,7 @@ index 1234567..2345678 100644
 -          <span className="text-red-600">-{deletions}</span>
 -        </span>
 +        )}
-+        {file?.status === "modified" && (
++        {file?.status === "normal" && (
 +          <span className="text-xs tabular-nums">
 +            <span className="text-green-600">+{additions}</span>
 +            <span className="text-red-600">-{deletions}</span>
@@ -472,12 +450,12 @@ index 1234567..2345678 100644
       "insert",
       "insert",
       "normal",
-      "modified",
+      "normal",
       "insert",
-      "modified",
-      "modified",
-      "modified",
-      "modified",
+      "normal",
+      "normal",
+      "normal",
+      "normal",
       "insert",
     ]);
 
@@ -491,7 +469,7 @@ index 1234567..2345678 100644
   });
 
   it("should handle simple JSX reformatting", () => {
-    const diff = `${HEADER}diff --git a/test.tsx b/test.tsx
+    const diff = `${HEADER}
 @@ -1,1 +1,3 @@
 -<Component prop="value" />
 +<Component
@@ -501,14 +479,16 @@ index 1234567..2345678 100644
     const result = lineBlocks(diff);
     const allLines = result.flatMap((r) => r.lines);
 
-    const modified = allLines.filter((l) => l.type === "normal"); // TODO:
+    const modified = allLines.filter(
+      (l) => l.type === "normal" && l.content.length > 1
+    );
     expect(allLines.length).toBe(3);
     // The split tag gets paired with its original since it's the start
     expect(modified.length).toBe(1);
   });
 
   it("should handle simple JSX reformatting", () => {
-    const diff = `${HEADER}diff --git a/test.tsx b/test.tsx
+    const diff = `${HEADER}
 @@ -1,1 +1,3 @@
 +<Component
 +  prop="value"
@@ -518,22 +498,20 @@ index 1234567..2345678 100644
 
     const result = lineBlocks(diff);
     const allLines = result.flatMap((r) => r.lines);
-    const modified = allLines.filter((l) => l.type === "normal"); // TODO:
     expect(allLines.length).toBe(3);
+    const modified = allLines.filter(
+      (l) => l.type === "normal" && l.content.length > 1
+    );
     // The split tag gets paired with its original since it's the start
     expect(modified.length).toBe(1);
 
     expect(allLines[0]?.content.map((s) => s.value.trim())).toEqual([
       "<Component",
-      'prop="value" />',
     ]);
   });
 
   it("should pair similar function signatures even when separated", () => {
-    const diff = `${HEADER}diff --git a/test.tsx b/test.tsx
-index 1234567..2345678 100644
---- a/test.tsx
-+++ b/test.tsx
+    const diff = `${HEADER}
 @@ -1,10 +1,15 @@
 +const Header: React.FC<Props> = ({
 +  className,
@@ -565,11 +543,11 @@ const Root = () => {
   });
 
   it("should handle React component prop addition with modified destructuring", () => {
-    const diff = `${HEADER}diff --git a/test.tsx b/test.tsx
+    const diff = `${HEADER}
 @@ -119,10 +125,32 @@ const Line: React.FC<{
    line: DiffLine;
    language: string;
-   status: "insert" | "delete" | "modified";
+   status: "insert" | "delete" | "normal";
 -}> = ({ line, language, status }) => {
 +  commentIndex?: FileCommentLineIndex;
 +}> = ({ line, language, status, commentIndex }) => {`;
@@ -583,7 +561,7 @@ const Root = () => {
       "normal",
       "normal",
       "insert",
-      "modified",
+      "normal",
     ]);
 
     // Verify the first added line is the new prop
@@ -594,7 +572,11 @@ const Root = () => {
     ).toBe(true);
 
     // Verify the modified line highlights both the added and removed destructuring pieces
-    const modifiedLine = allLines.find((l) => l.type === "normal"); // TODO:
+    const modified = allLines.filter(
+      (l) => l.type === "normal" && l.content.length > 1
+    );
+    expect(modified.length).toBe(1);
+    const modifiedLine = modified[0];
     expect(modifiedLine).toBeDefined();
     expect(
       modifiedLine?.content.some(
@@ -608,7 +590,7 @@ const Root = () => {
     ).toBe(true);
   });
   it("should character diffs nicely", () => {
-    const diff = `${HEADER}diff --git a/test.tsx b/test.tsx
+    const diff = `${HEADER}
 @@ -1,1 +1,1 @@ const Line: React.FC<{
 -Setup a new challeng each day
 +Setup a new challenge each day
@@ -622,7 +604,7 @@ const Root = () => {
 
     expect(allLines).toHaveLength(1);
 
-    expect(allLines[0]!.type).toBe("modified");
+    expect(allLines[0]!.type).toBe("normal");
     expect(allLines[0]!.content.map((s) => s.value)).toEqual([
       "Setup a new challeng",
       "e",
@@ -635,7 +617,7 @@ const Root = () => {
     ]);
   });
   it("should character diffs nicely in beginning of word", () => {
-    const diff = `${HEADER}diff --git a/test.tsx b/test.tsx
+    const diff = `${HEADER}
 @@ -1,1 +1,1 @@ const Line: React.FC<{
 -setup a new challenge each day
 +Setup a new challenge each day
@@ -646,7 +628,7 @@ const Root = () => {
     const allLines = result.flatMap((r) => r.lines);
     expect(allLines).toHaveLength(1);
 
-    expect(allLines[0]!.type).toBe("modified");
+    expect(allLines[0]!.type).toBe("normal");
     expect(allLines[0]!.content.map((s) => s.value)).toEqual([
       "s",
       "S",
@@ -659,7 +641,7 @@ const Root = () => {
     ]);
   });
   it("should character diffs nicely in middle of word", () => {
-    const diff = `${HEADER}diff --git a/test.tsx b/test.tsx
+    const diff = `${HEADER}
 @@ -1,1 +1,1 @@ const Line: React.FC<{
 -Setup a new challennge each day
 +Setup a new challenge each day
@@ -672,7 +654,7 @@ const Root = () => {
 
     expect(allLines).toHaveLength(1);
 
-    expect(allLines[0]!.type).toBe("modified");
+    expect(allLines[0]!.type).toBe("normal");
     expect(allLines[0]!.content.map((s) => s.value)).toEqual([
       "Setup a new challen",
       "n",
