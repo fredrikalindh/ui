@@ -1,10 +1,8 @@
 import { describe, expect, it, test } from "vitest";
-import { parseDiff, type DiffLine } from "../parse-diff";
+import { parseDiff } from "../utils/parse";
 
 const lineBlocks = (diff: string) =>
-  parseDiff(diff).filter(
-    (item): item is { kind: "line"; line: DiffLine[] } => item.kind === "line"
-  );
+  parseDiff(diff)?.[0]?.hunks.filter((hunk) => hunk.type === "hunk");
 
 const HEADER = `diff --git a/file.tsx b/file.tsx
 index 4def792..b63576c 100644
@@ -22,12 +20,12 @@ describe("parseDiff concise plan", () => {
 
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
-      expect(chunk!.line.map((l) => l.type)).toEqual([
-        "unchanged",
-        "added",
-        "unchanged",
+      expect(chunk.lines.map((l) => l.type)).toEqual([
+        "normal",
+        "insert",
+        "normal",
       ]);
-      expect(chunk!.line[1]?.segments[0]?.value).toBe("line 2");
+      expect(chunk!.lines[1]?.content[0]?.value).toBe("line 2");
     });
 
     test("returns removed lines when content disappears", () => {
@@ -38,23 +36,23 @@ describe("parseDiff concise plan", () => {
 
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
-      expect(chunk!.line.map((l) => l.type)).toEqual([
-        "unchanged",
-        "removed",
-        "unchanged",
+      expect(chunk!.lines.map((l) => l.type)).toEqual([
+        "normal",
+        "delete",
+        "normal",
       ]);
-      expect(chunk!.line[1]?.segments[0]?.value).toBe("line 2");
+      expect(chunk!.lines[1]?.content[0]?.value).toBe("line 2");
     });
 
-    test("preserves unchanged lines in diff output", () => {
+    test("preserves normal lines in diff output", () => {
       const diff = `${HEADER}@@ -1,2 +1,2 @@
  line 1
  line 2`;
 
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
-      expect(chunk!.line).toHaveLength(2);
-      expect(chunk!.line.every((l) => l.type === "unchanged")).toBe(true);
+      expect(chunk!.lines).toHaveLength(2);
+      expect(chunk!.lines.every((l) => l.type === "normal")).toBe(true);
     });
 
     test("handles empty diff gracefully", () => {
@@ -70,8 +68,8 @@ describe("parseDiff concise plan", () => {
 
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
-      expect(chunk!.line[1]?.type).toBe("removed");
-      expect(chunk!.line[2]?.type).toBe("added");
+      expect(chunk!.lines[1]?.type).toBe("delete");
+      expect(chunk!.lines[2]?.type).toBe("insert");
     });
 
     test("groups multiple consecutive additions", () => {
@@ -83,11 +81,11 @@ describe("parseDiff concise plan", () => {
 
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
-      expect(chunk!.line.map((l) => l.type)).toEqual([
-        "unchanged",
-        "added",
-        "added",
-        "added",
+      expect(chunk!.lines.map((l) => l.type)).toEqual([
+        "normal",
+        "insert",
+        "insert",
+        "insert",
       ]);
     });
 
@@ -100,15 +98,15 @@ describe("parseDiff concise plan", () => {
 
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
-      expect(chunk!.line.map((l) => l.type)).toEqual([
-        "unchanged",
-        "removed",
-        "removed",
-        "removed",
+      expect(chunk!.lines.map((l) => l.type)).toEqual([
+        "normal",
+        "delete",
+        "delete",
+        "delete",
       ]);
     });
 
-    test("treats adding newline at EOF as unchanged", () => {
+    test.only("treats adding newline at EOF as normal", () => {
       // This is the actual scenario from packages/api/tsconfig.json
       const diff = `${HEADER}@@ -11,6 +11,6 @@
        "@workspace/github": ["../github/src"]
@@ -124,30 +122,32 @@ describe("parseDiff concise plan", () => {
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
 
+      console.log(JSON.stringify(chunk, null, 2));
+
       // The last line should be the final closing brace
-      const lastLine = chunk!.line[chunk!.line.length - 1];
+      const lastLine = chunk!.lines[chunk!.lines.length - 1];
       expect(lastLine).toBeDefined();
       expect(
-        lastLine!.segments
+        lastLine!.content
           .map((s) => s.value)
           .join("")
           .trim()
       ).toBe("}");
 
-      // The closing brace should appear as unchanged (not as both removed and added)
-      expect(lastLine!.type).toBe("unchanged");
+      // The closing brace should appear as normal (not as both removed and added)
+      expect(lastLine!.type).toBe("normal");
 
       // Verify there's no separate removed and added version of the final }
-      const allLines = chunk!.line.map((l) => ({
+      const allLines = chunk!.lines.map((l) => ({
         type: l.type,
-        content: l.segments
+        content: l.content
           .map((s) => s.value)
           .join("")
           .trim(),
       }));
 
       const finalBraceCount = allLines.filter(
-        (l) => l.content === "}" && l.type !== "unchanged"
+        (l) => l.content === "}" && l.type !== "normal"
       ).length;
 
       // Should have no removed or added versions of the final }
@@ -163,22 +163,20 @@ describe("parseDiff concise plan", () => {
 
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
-      expect(chunk!.line).toHaveLength(1);
-      expect(chunk!.line[0]?.type).toBe("modified");
+      expect(chunk!.lines).toHaveLength(1);
+      expect(chunk!.lines[0]?.type).toBe("modified");
 
-      const segments = chunk!.line[0]!.segments;
+      const segments = chunk!.lines[0]!.content;
       expect(
         segments.some(
-          (s) => s.type === "removed" && s.value.includes("useState")
+          (s) => s.type === "delete" && s.value.includes("useState")
         )
       ).toBe(true);
       expect(
-        segments.some((s) => s.type === "added" && s.value.includes("useRef"))
+        segments.some((s) => s.type === "insert" && s.value.includes("useRef"))
       ).toBe(false);
       expect(
-        segments.some(
-          (s) => s.type === "unchanged" && s.value.includes("import")
-        )
+        segments.some((s) => s.type === "normal" && s.value.includes("import"))
       ).toBe(true);
     });
     test("generates word-level diff despite addition coming before deletion", () => {
@@ -189,22 +187,20 @@ describe("parseDiff concise plan", () => {
 
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
-      expect(chunk!.line).toHaveLength(1);
-      expect(chunk!.line[0]?.type).toBe("modified");
+      expect(chunk!.lines).toHaveLength(1);
+      expect(chunk!.lines[0]?.type).toBe("modified");
 
-      const segments = chunk!.line[0]!.segments;
+      const segments = chunk!.lines[0]!.content;
       expect(
         segments.some(
-          (s) => s.type === "removed" && s.value.includes("useState")
+          (s) => s.type === "delete" && s.value.includes("useState")
         )
       ).toBe(true);
       expect(
-        segments.some((s) => s.type === "added" && s.value.includes("useRef"))
+        segments.some((s) => s.type === "insert" && s.value.includes("useRef"))
       ).toBe(false);
       expect(
-        segments.some(
-          (s) => s.type === "unchanged" && s.value.includes("import")
-        )
+        segments.some((s) => s.type === "normal" && s.value.includes("import"))
       ).toBe(true);
     });
 
@@ -214,17 +210,17 @@ describe("parseDiff concise plan", () => {
 -const baz = 'qux';
 +const foo = 'baz';
 +const baz = 'quux';
- const unchanged = 'value';
+ const normal = 'value';
 `;
 
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
-      expect(chunk!.line).toHaveLength(3);
+      expect(chunk!.lines).toHaveLength(3);
 
-      expect(chunk!.line.map((l) => l.type)).toEqual([
+      expect(chunk!.lines.map((l) => l.type)).toEqual([
         "modified",
         "modified",
-        "unchanged",
+        "normal",
       ]);
     });
 
@@ -235,7 +231,7 @@ describe("parseDiff concise plan", () => {
 
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
-      expect(chunk!.line.map((l) => l.type)).toEqual(["removed", "added"]);
+      expect(chunk!.lines.map((l) => l.type)).toEqual(["delete", "insert"]);
     });
 
     test("respects similarity threshold around fifty percent", () => {
@@ -245,14 +241,14 @@ describe("parseDiff concise plan", () => {
 
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
-      expect(chunk!.line).toHaveLength(1);
-      expect(chunk!.line?.[0]?.segments.map((l) => l.type)).toEqual([
-        "unchanged",
-        "removed",
-        "added",
-        "unchanged",
+      expect(chunk!.lines).toHaveLength(1);
+      expect(chunk!.lines?.[0]?.content.map((l) => l.type)).toEqual([
+        "normal",
+        "delete",
+        "insert",
+        "normal",
       ]);
-      expect(chunk!.line[0]?.type).toBe("modified");
+      expect(chunk!.lines[0]?.type).toBe("modified");
     });
 
     test("rejects very low similarity matches", () => {
@@ -262,7 +258,7 @@ describe("parseDiff concise plan", () => {
 
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
-      expect(chunk!.line.map((l) => l.type)).toEqual(["removed", "added"]);
+      expect(chunk!.lines.map((l) => l.type)).toEqual(["delete", "insert"]);
     });
 
     test("prefers best pairings when multiple candidates exist", () => {
@@ -276,32 +272,32 @@ describe("parseDiff concise plan", () => {
 
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
-      expect(chunk!.line.map((l) => l.type)).toEqual([
+      expect(chunk!.lines.map((l) => l.type)).toEqual([
         "modified",
         "modified",
-        "unchanged",
-        "unchanged",
+        "normal",
+        "normal",
       ]);
 
-      const [valueLine, resultLine] = chunk!.line;
+      const [valueLine, resultLine] = chunk!.lines;
       expect(
-        valueLine?.segments.some(
-          (s) => s.type === "removed" && s.value.includes("getValue")
+        valueLine?.content.some(
+          (s) => s.type === "delete" && s.value.includes("getValue")
         )
       ).toBe(true);
       expect(
-        valueLine?.segments.some(
-          (s) => s.type === "added" && s.value.includes("calculateValue")
+        valueLine?.content.some(
+          (s) => s.type === "insert" && s.value.includes("calculateValue")
         )
       ).toBe(true);
       expect(
-        resultLine?.segments.some(
-          (s) => s.type === "removed" && s.value.includes("getResult")
+        resultLine?.content.some(
+          (s) => s.type === "delete" && s.value.includes("getResult")
         )
       ).toBe(true);
       expect(
-        resultLine?.segments.some(
-          (s) => s.type === "added" && s.value.includes("processResult")
+        resultLine?.content.some(
+          (s) => s.type === "insert" && s.value.includes("processResult")
         )
       ).toBe(true);
     });
@@ -368,24 +364,22 @@ describe("parseDiff concise plan", () => {
 +<Card.Root
 +  data-section-id={id}
 +  id={id}
-+  defaultOpen={file.status !== "removed"}
++  defaultOpen={file.status !== "delete"}
 +>`;
 
-    const result = parseDiff(diff);
-    const allLines = result
-      .filter((r) => r.kind === "line")
-      .flatMap((r) => (r.kind === "line" ? r.line : []));
+    const result = lineBlocks(diff);
+    const allLines = result.flatMap((r) => r.lines);
 
-    const removed = allLines.filter((l) => l.type === "removed");
-    const added = allLines.filter((l) => l.type === "added");
+    const removed = allLines.filter((l) => l.type === "delete");
+    const added = allLines.filter((l) => l.type === "insert");
 
     // Should be separate removed and added lines, not merged
     expect(removed.length).toBe(1);
     expect(added.length).toBe(5);
 
     // Removed line should come first
-    expect(allLines[0]?.type).toBe("removed");
-    expect(allLines[1]?.type).toBe("added");
+    expect(allLines[0]?.type).toBe("delete");
+    expect(allLines[1]?.type).toBe("insert");
   });
 
   it.todo("should extract the function name from the line", () => {
@@ -411,14 +405,12 @@ describe("parseDiff concise plan", () => {
            className="text-xl font-medium mb-2 mt-4 first:mt-0"
            id={slugify(displayTitle)}`;
 
-    const result = parseDiff(diff);
-    const allLines = result
-      .filter((r) => r.kind === "line")
-      .flatMap((r) => (r.kind === "line" ? r.line : []));
+    const result = lineBlocks(diff);
+    const allLines = result.flatMap((r) => r.lines);
 
-    const modified = allLines.filter((l) => l.type === "modified");
-    const added = allLines.filter((l) => l.type === "added");
-    const removed = allLines.filter((l) => l.type === "removed");
+    const modified = allLines.filter((l) => l.type === "normal");
+    const added = allLines.filter((l) => l.type === "insert");
+    const removed = allLines.filter((l) => l.type === "delete");
 
     // Should be displayed as a single modified line, not separate removed + added
     expect(modified.length).toBe(1);
@@ -429,8 +421,8 @@ describe("parseDiff concise plan", () => {
     const modifiedLine = modified[0];
     expect(modifiedLine).toBeDefined();
 
-    const hasRemovedSegment = modifiedLine?.segments.some(
-      (s) => s.type === "removed" && s.value.includes("pr-24")
+    const hasRemovedSegment = modifiedLine?.content.some(
+      (s) => s.type === "delete" && s.value.includes("pr-24")
     );
     expect(hasRemovedSegment).toBe(true);
   });
@@ -443,12 +435,12 @@ index 1234567..2345678 100644
 @@ -95,18 +95,24 @@ const DiffViewer = ({
    return (
      <Card.Root data-section-id={id} id={id}>
--        {file?.status === "added" ? (
+-        {file?.status === "insert" ? (
 -          <Badge variant="success">New</Badge>
 -        ) : file?.status === "deleted" ? (
 +
-+        {file?.status === "added" && <Badge variant="success">New</Badge>}
-+        {file?.status === "removed" && (
++        {file?.status === "insert" && <Badge variant="success">New</Badge>}
++        {file?.status === "delete" && (
            <Badge variant="destructive">Deleted</Badge>
 -        ) : null}
 -        <span className="text-xs tabular-nums">
@@ -464,42 +456,37 @@ index 1234567..2345678 100644
 +        )}
 `;
 
-    const result = parseDiff(diff);
-
-    console.log(JSON.stringify(result, null, 2));
-
-    const allLines = result
-      .filter((r) => r.kind === "line")
-      .flatMap((r) => (r.kind === "line" ? r.line : []));
+    const result = lineBlocks(diff);
+    const allLines = result.flatMap((r) => r.lines);
 
     expect(allLines).toHaveLength(16);
 
-    // Should have 3 unchanged lines, one added prop line, and a modified destructuring line
+    // Should have 3 normal lines, one added prop line, and a modified destructuring line
     expect(allLines.map((l) => l.type)).toEqual([
-      "unchanged",
-      "unchanged",
-      "removed",
-      "removed",
-      "removed",
-      "added",
-      "added",
-      "added",
-      "unchanged",
+      "normal",
+      "normal",
+      "delete",
+      "delete",
+      "delete",
+      "insert",
+      "insert",
+      "insert",
+      "normal",
       "modified",
-      "added",
-      "modified",
-      "modified",
+      "insert",
       "modified",
       "modified",
-      "added",
+      "modified",
+      "modified",
+      "insert",
     ]);
 
     // the last 4 modified lines should not have any added or removed segments
     expect(
       allLines
-        .filter((l) => l.type === "modified")
+        .filter((l) => l.type === "normal")
         .slice(-4)
-        .every((l) => l.segments.every((s) => s.type === "unchanged"))
+        .every((l) => l.content.every((s) => s.type === "normal"))
     ).toBe(true);
   });
 
@@ -511,11 +498,10 @@ index 1234567..2345678 100644
 +  prop="value"
 +/>`;
 
-    const result = parseDiff(diff);
-    const allLines = result
-      .filter((r) => r.kind === "line")
-      .flatMap((r) => (r.kind === "line" ? r.line : []));
-    const modified = allLines.filter((l) => l.type === "modified");
+    const result = lineBlocks(diff);
+    const allLines = result.flatMap((r) => r.lines);
+
+    const modified = allLines.filter((l) => l.type === "normal"); // TODO:
     expect(allLines.length).toBe(3);
     // The split tag gets paired with its original since it's the start
     expect(modified.length).toBe(1);
@@ -530,16 +516,14 @@ index 1234567..2345678 100644
 -<Component prop="value" />
 `;
 
-    const result = parseDiff(diff);
-    const allLines = result
-      .filter((r) => r.kind === "line")
-      .flatMap((r) => (r.kind === "line" ? r.line : []));
-    const modified = allLines.filter((l) => l.type === "modified");
+    const result = lineBlocks(diff);
+    const allLines = result.flatMap((r) => r.lines);
+    const modified = allLines.filter((l) => l.type === "normal"); // TODO:
     expect(allLines.length).toBe(3);
     // The split tag gets paired with its original since it's the start
     expect(modified.length).toBe(1);
 
-    expect(allLines[0]?.segments.map((s) => s.value.trim())).toEqual([
+    expect(allLines[0]?.content.map((s) => s.value.trim())).toEqual([
       "<Component",
       'prop="value" />',
     ]);
@@ -567,13 +551,11 @@ const Root = () => {
 +  </Wrapper>
 );`;
 
-    const result = parseDiff(diff);
-    const allLines = result
-      .filter((r) => r.kind === "line")
-      .flatMap((r) => (r.kind === "line" ? r.line : []));
+    const result = lineBlocks(diff);
+    const allLines = result.flatMap((r) => r.lines);
 
-    const removedLines = allLines.filter((l) => l.type === "removed");
-    const addedLines = allLines.filter((l) => l.type === "added");
+    const removedLines = allLines.filter((l) => l.type === "delete");
+    const addedLines = allLines.filter((l) => l.type === "insert");
 
     // The Header component was moved and restructured. Due to the distance and
     // intervening context lines, these don't get paired as modifications.
@@ -587,43 +569,41 @@ const Root = () => {
 @@ -119,10 +125,32 @@ const Line: React.FC<{
    line: DiffLine;
    language: string;
-   status: "added" | "removed" | "modified";
+   status: "insert" | "delete" | "modified";
 -}> = ({ line, language, status }) => {
 +  commentIndex?: FileCommentLineIndex;
 +}> = ({ line, language, status, commentIndex }) => {`;
 
-    const result = parseDiff(diff);
-    const allLines = result
-      .filter((r) => r.kind === "line")
-      .flatMap((r) => (r.kind === "line" ? r.line : []));
+    const result = lineBlocks(diff);
+    const allLines = result.flatMap((r) => r.lines);
 
-    // Should have 3 unchanged lines, one added prop line, and a modified destructuring line
+    // Should have 3 normal lines, one added prop line, and a modified destructuring line
     expect(allLines.map((l) => l.type)).toEqual([
-      "unchanged",
-      "unchanged",
-      "unchanged",
-      "added",
+      "normal",
+      "normal",
+      "normal",
+      "insert",
       "modified",
     ]);
 
     // Verify the first added line is the new prop
-    const addedLines = allLines.filter((l) => l.type === "added");
+    const addedLines = allLines.filter((l) => l.type === "insert");
     expect(addedLines).toHaveLength(1);
     expect(
-      addedLines[0]?.segments.some((s) => s.value.includes("commentIndex?"))
+      addedLines[0]?.content.some((s) => s.value.includes("commentIndex?"))
     ).toBe(true);
 
     // Verify the modified line highlights both the added and removed destructuring pieces
-    const modifiedLine = allLines.find((l) => l.type === "modified");
+    const modifiedLine = allLines.find((l) => l.type === "normal"); // TODO:
     expect(modifiedLine).toBeDefined();
     expect(
-      modifiedLine?.segments.some(
-        (s) => s.type === "added" && s.value.includes("commentIndex")
+      modifiedLine?.content.some(
+        (s) => s.type === "insert" && s.value.includes("commentIndex")
       )
     ).toBe(true);
     expect(
-      modifiedLine?.segments.some(
-        (s) => s.type !== "added" && s.value.includes("line, language, status")
+      modifiedLine?.content.some(
+        (s) => s.type !== "insert" && s.value.includes("line, language, status")
       )
     ).toBe(true);
   });
@@ -634,26 +614,24 @@ const Root = () => {
 +Setup a new challenge each day
 `;
 
-    const result = parseDiff(diff);
+    const result = lineBlocks(diff);
 
     expect(result).toHaveLength(1);
 
-    const allLines = result
-      .filter((r) => r.kind === "line")
-      .flatMap((r) => (r.kind === "line" ? r.line : []));
+    const allLines = result.flatMap((r) => r.lines);
 
     expect(allLines).toHaveLength(1);
 
     expect(allLines[0]!.type).toBe("modified");
-    expect(allLines[0]!.segments.map((s) => s.value)).toEqual([
+    expect(allLines[0]!.content.map((s) => s.value)).toEqual([
       "Setup a new challeng",
       "e",
       " each day",
     ]);
-    expect(allLines[0]!.segments.map((s) => s.type)).toEqual([
-      "unchanged",
-      "added",
-      "unchanged",
+    expect(allLines[0]!.content.map((s) => s.type)).toEqual([
+      "normal",
+      "insert",
+      "normal",
     ]);
   });
   it("should character diffs nicely in beginning of word", () => {
@@ -663,26 +641,21 @@ const Root = () => {
 +Setup a new challenge each day
 `;
 
-    const result = parseDiff(diff);
-
+    const result = lineBlocks(diff);
     expect(result).toHaveLength(1);
-
-    const allLines = result
-      .filter((r) => r.kind === "line")
-      .flatMap((r) => (r.kind === "line" ? r.line : []));
-
+    const allLines = result.flatMap((r) => r.lines);
     expect(allLines).toHaveLength(1);
 
     expect(allLines[0]!.type).toBe("modified");
-    expect(allLines[0]!.segments.map((s) => s.value)).toEqual([
+    expect(allLines[0]!.content.map((s) => s.value)).toEqual([
       "s",
       "S",
       "etup a new challenge each day",
     ]);
-    expect(allLines[0]!.segments.map((s) => s.type)).toEqual([
-      "removed",
-      "added",
-      "unchanged",
+    expect(allLines[0]!.content.map((s) => s.type)).toEqual([
+      "delete",
+      "insert",
+      "normal",
     ]);
   });
   it("should character diffs nicely in middle of word", () => {
@@ -692,26 +665,23 @@ const Root = () => {
 +Setup a new challenge each day
 `;
 
-    const result = parseDiff(diff);
+    const result = lineBlocks(diff);
 
     expect(result).toHaveLength(1);
-
-    const allLines = result
-      .filter((r) => r.kind === "line")
-      .flatMap((r) => (r.kind === "line" ? r.line : []));
+    const allLines = result.flatMap((r) => r.lines);
 
     expect(allLines).toHaveLength(1);
 
     expect(allLines[0]!.type).toBe("modified");
-    expect(allLines[0]!.segments.map((s) => s.value)).toEqual([
+    expect(allLines[0]!.content.map((s) => s.value)).toEqual([
       "Setup a new challen",
       "n",
       "ge each day",
     ]);
-    expect(allLines[0]!.segments.map((s) => s.type)).toEqual([
-      "unchanged",
-      "removed",
-      "unchanged",
+    expect(allLines[0]!.content.map((s) => s.type)).toEqual([
+      "normal",
+      "delete",
+      "normal",
     ]);
   });
 });

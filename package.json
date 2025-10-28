@@ -11,6 +11,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:watch": "vitest",
     "registry:build": "shadcn build"
   },
   "dependencies": {
@@ -23,9 +26,11 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "diff": "^8.0.2",
+    "diff-match-patch": "^1.0.5",
     "fumadocs-core": "^16.0.4",
     "fumadocs-mdx": "^13.0.2",
     "fumadocs-ui": "^16.0.4",
+    "gitdiff-parser": "^0.3.1",
     "jotai": "^2.15.0",
     "lucide-react": "^0.487.0",
     "next": "16.0.0",
@@ -43,13 +48,19 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@tailwindcss/postcss": "^4.1.11",
+    "@types/diff-match-patch": "^1.0.36",
     "@types/node": "^20.19.9",
     "@types/react": "19.1.2",
     "@types/react-dom": "19.1.2",
+    "@vitest/coverage-v8": "^4.0.4",
+    "@vitest/ui": "^4.0.4",
     "eslint": "^9.32.0",
     "eslint-config-next": "16.0.0",
+    "happy-dom": "^20.0.8",
+    "jsdom": "^27.0.1",
     "tailwindcss": "^4.1.11",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^4.0.4"
   },
   "pnpm": {
     "overrides": {

@@ -1,5 +1,5 @@
 import { diffChars, diffWords } from "diff";
-import parseDiff, { Chunk } from "parse-diff";
+import parseDiffOriginal, { Chunk } from "parse-diff";
 
 export interface DiffSegment {
   value: string;
@@ -390,8 +390,8 @@ const parseChunk = (chunk: Chunk): DiffLine[] => {
   return diffLines;
 };
 
-export const computeDiff = (diff: string): DiffItem[] => {
-  const [file] = parseDiff(diff); // assume single-file patch
+export const parseDiff = (diff: string): DiffItem[] => {
+  const [file] = parseDiffOriginal(diff); // assume single-file patch
   if (!file) return [];
 
   const result: DiffItem[] = [];

@@ -13,10 +13,12 @@ index 3facda6..82485f0 100644
 @@ -1,3 +1,3 @@
 -import { useState, useRef } from 'react';
 +import { useRef, useEffect } from 'react';
-    
+
 -const Inpt = () => {
 +const Input = () => {
 `} />
+
+<DiffViewer />
 
 
 ## Installation
@@ -31,16 +33,22 @@ npx shadcn@latest add diff-viewer
 Render the diff viewer with the `patch` prop.
 
 ```tsx
-<DiffViewer patch={`diff --git a/components/input.tsx b/components/input.tsx
-index 3facda6..82485f0 100644
---- a/components/input.tsx
-+++ b/components/input.tsx
-@@ -1,3 +1,3 @@
--import { useState, useRef } from 'react';
-+import { useRef, useEffect } from 'react';
-  
--const Inpt = () => {
-+const Input = () => {
-`} />
+import { parseDiff, Diff, Hunk, Link } from "@/registry/ui/diff/parse-diff";
+
+const DiffViewer = () => {
+  const files = parseDiff(diff);
+  return (
+    <div>
+      {files.map((file) => (
+        <Diff key={file.name} hunks={file.hunks}>
+          {file.hunks.map((hunk) => (
+            <Hunk key={hunk.id} />
+          ))}
+        </Diff>
+      ))}
+    </div>
+  );
+};
 ```
 
+## Parse options
