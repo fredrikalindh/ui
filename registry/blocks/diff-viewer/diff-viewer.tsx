@@ -9,36 +9,23 @@ import {
 } from "@/registry/ui/collapsible-card";
 
 import { Badge } from "@/components/ui/badge";
-import { parseDiff, zipChanges } from "@/registry/ui/diff/utils/parse";
-import gitdiffParser from "gitdiff-parser";
+import { parseDiff, ParseOptions } from "@/registry/ui/diff/utils/parse";
 
 // TODO: scroll area?
-export function DiffViewer({ patch = EXAMPLE_DIFF }: { patch?: string }) {
-  const [file] = parseDiff(patch);
-  // const [file] = gitdiffParser.parse(patch);
-
-  // const hunk = file.hunks[0];
-
-  // if (!hunk) return null;
-
-  // console.log({changes: hunk.changes, zip: zipChanges(hunk.changes)});
-
-  // return (
-  //   <div className="my-4">
-  //     <pre className="text-xs border rounded-xl overflow-y-auto">
-  //       {JSON.stringify(hunk.changes, null, 2)}
-  //     </pre>
-  //     <pre className="text-xs border rounded-xl overflow-y-auto">
-  //       {JSON.stringify(zipChanges(hunk.changes), null, 2)}
-  //     </pre>
-  //   </div>
-  // );
+export function DiffViewer({
+  patch = EXAMPLE_DIFF,
+  options = {},
+}: {
+  patch?: string;
+  options?: Partial<ParseOptions>;
+}) {
+  const [file] = parseDiff(patch, options);
 
   return (
     <CollapsibleCard
       data-section-id="diff-viewer"
       id="diff-viewer"
-      className="my-8 text-[0.8rem] w-full"
+      className="my-2 text-[0.8rem] w-full"
       title="File Changes"
       defaultOpen
     >

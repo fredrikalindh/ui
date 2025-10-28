@@ -76,3 +76,23 @@ index fa4d9c4..8d980f1 100644
 +  </Collapsible.Trigger>
  );
  `;
+
+export const SIMPLE_DIFF = `diff --git a/components/input.tsx b/components/input.tsx
+index 3facda6..82485f0 100644
+--- a/components/input.tsx
++++ b/components/input.tsx
+@@ -1,3 +1,3 @@
+-import { useState, useRef } from 'react';
++import { useRef, useEffect } from 'react';
+-const Inpt = () => {
++const Input = () => {
+`;
+
+export const DISSIMILAR_DIFF = `diff --git a/components/input.tsx b/components/input.tsx
+index 3facda6..82485f0 100644
+--- a/components/input.tsx
++++ b/components/input.tsx
+@@ -1,3 +1,3 @@
+-import { useState, useRef } from 'react';
++const Input = () => {
+`;

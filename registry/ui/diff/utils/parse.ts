@@ -36,11 +36,43 @@ export interface File extends Omit<_File, "hunks"> {
 }
 
 export interface ParseOptions {
-  maxDiffDistance?: number;
-  similarityThreshold?: number;
+  maxDiffDistance: number;
+  similarityThreshold: number;
   zipChanges?: boolean;
-  mergeModifiedLines?: boolean;
+  mergeModifiedLines: boolean;
 }
+
+/**
+ * Computes how much of the combined content changed between two strings.
+ * A lower ratio indicates a closer match.
+ */
+const changeRatio = (a: string, b: string): number => {
+  const tokens = diffWords(a, b);
+  const changedChars = tokens
+    .filter((token) => token.added || token.removed)
+    .reduce((sum, token) => sum + token.value.length, 0);
+  const totalChars = a.length + b.length;
+  return totalChars === 0 ? 1 : changedChars / totalChars;
+};
+
+/**
+ * Heuristic: determine whether two lines are similar enough to be considered a
+ * modification rather than a deletion + insertion.
+ */
+const isSimilar = (
+  a: string,
+  b: string,
+  similarityThreshold: number
+): boolean => {
+  if (similarityThreshold === 0) return true;
+  // Don't pair empty/whitespace-only lines
+  // if (a.trim().length === 0 || b.trim().length === 0) return false;
+
+  // Treat lines that differ only by trailing whitespace as identical
+  if (a.trimEnd() === b.trimEnd()) return true;
+
+  return changeRatio(a, b) < similarityThreshold;
+};
 
 // TODO: segments for modified lines with https://www.npmjs.com/package/diff-match-patch
 const parseLine = (line: _Change): LineSegment[] => {
@@ -179,7 +211,10 @@ const modifiedContent = (current: _Change, next: _Change): Line["content"] => {
   return result;
 };
 
-const mergeModifiedLines = (changes: _Change[]): Line[] => {
+const mergeModifiedLines = (
+  changes: _Change[],
+  options: ParseOptions
+): Line[] => {
   const result: Line[] = [];
   // - [x] stupid version of this deletion followed by an addition is a modified line
   // - [ ] match line numbers
@@ -188,7 +223,11 @@ const mergeModifiedLines = (changes: _Change[]): Line[] => {
     const current = changes[i];
     const next = changes[i + 1];
 
-    if (current.type === "delete" && next?.type === "insert") {
+    if (
+      current.type === "delete" &&
+      next?.type === "insert" &&
+      isSimilar(current.content, next.content, options.similarityThreshold)
+    ) {
       const content = modifiedContent(current, next);
       result.push({
         type: "normal",
@@ -215,7 +254,7 @@ const parseHunk = (hunk: _Hunk, options: ParseOptions): Hunk => {
     return {
       ...hunk,
       type: "hunk",
-      lines: mergeModifiedLines(hunk.changes),
+      lines: mergeModifiedLines(hunk.changes, options),
     };
   }
 
@@ -255,19 +294,22 @@ const insertSkipBlocks = (hunks: Hunk[]): (Hunk | SkipBlock)[] => {
   return result;
 };
 
+const defaultOptions: ParseOptions = {
+  maxDiffDistance: 6,
+  similarityThreshold: 0.45,
+  zipChanges: false,
+  mergeModifiedLines: true,
+};
+
 export const parseDiff = (
   diff: string,
-  options: ParseOptions = {
-    maxDiffDistance: 6,
-    similarityThreshold: 0.45,
-    zipChanges: false,
-    mergeModifiedLines: true,
-  }
+  options: Partial<ParseOptions>
 ): File[] => {
+  const opts = { ...defaultOptions, ...options };
   const files = gitDiffParser.parse(diff);
 
   return files.map((file) => ({
     ...file,
-    hunks: insertSkipBlocks(file.hunks.map((hunk) => parseHunk(hunk, options))),
+    hunks: insertSkipBlocks(file.hunks.map((hunk) => parseHunk(hunk, opts))),
   }));
 };

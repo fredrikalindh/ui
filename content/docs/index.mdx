@@ -4,22 +4,10 @@ description: An opinionated simple diff viewer for React.
 ---
 
 import { DiffViewer } from "@/registry/blocks/diff-viewer/diff-viewer";
+import { EXAMPLE_DIFF, SIMPLE_DIFF, DISSIMILAR_DIFF } from '@/registry/blocks/diff-viewer/data';
 
 
-<DiffViewer patch={`diff --git a/components/input.tsx b/components/input.tsx
-index 3facda6..82485f0 100644
---- a/components/input.tsx
-+++ b/components/input.tsx
-@@ -1,3 +1,3 @@
--import { useState, useRef } from 'react';
-+import { useRef, useEffect } from 'react';
-
--const Inpt = () => {
-+const Input = () => {
-`} />
-
-<DiffViewer />
-
+<DiffViewer patch={EXAMPLE_DIFF} />
 
 ## Installation
 
@@ -51,4 +39,40 @@ const DiffViewer = () => {
 };
 ```
 
-## Parse options
+## How it works
+
+This is what GitHub shows for this example diff:
+<DiffViewer patch={SIMPLE_DIFF} options={{ mergeModifiedLines: false }} />
+
+
+With merging of adjacent deleted and inserted lines, we can make it more readable:
+
+<DiffViewer patch={SIMPLE_DIFF} />
+
+Without any other logic, it will not be chaotic when the lines are very different:
+
+<DiffViewer patch={DISSIMILAR_DIFF} options={{ similarityThreshold: 0 }} />
+
+We can add a similarity threshold to the diff parser to merge lines that are similar.
+
+<DiffViewer patch={DISSIMILAR_DIFF} />
+
+In even more complex cases, we might want to merge lines that are similar but not adjacent.
+
+<Tabs defaultValue="GitHub">
+  <TabsList>
+    <TabsTrigger value="GitHub">GitHub Style</TabsTrigger>
+    <TabsTrigger value="Merged Adjacent">Merge Adjacent Lines</TabsTrigger>
+    <TabsTrigger value="Similar">Merge Similar Lines</TabsTrigger>
+  </TabsList>
+  <TabsContent value="GitHub">
+    <DiffViewer patch={EXAMPLE_DIFF} options={{ mergeModifiedLines: false }} />
+  </TabsContent>
+  <TabsContent value="Merged Adjacent">
+    <DiffViewer patch={EXAMPLE_DIFF} options={{ mergeModifiedLines: true, maxDiffDistance: 1 }} />
+  </TabsContent>
+  <TabsContent value="Similar">
+    <DiffViewer patch={EXAMPLE_DIFF} options={{ mergeModifiedLines: false,  maxDiffDistance: 10 }} />
+  </TabsContent>
+</Tabs>
+
