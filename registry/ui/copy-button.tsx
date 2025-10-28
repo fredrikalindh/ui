@@ -7,18 +7,19 @@ import { Button } from "./button";
 import { cn } from "@/lib/utils";
 
 export const CopyButton = ({
-  text,
+  value,
   className,
+  ...props
 }: {
-  text: string;
+  value: string;
   className?: string;
-}) => {
+} & React.ComponentProps<"button">) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!text) return;
+    if (!value) return;
     e.stopPropagation();
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(value);
     setCopied(true);
     setTimeout(() => {
       setCopied(false);
@@ -30,9 +31,11 @@ export const CopyButton = ({
       variant="ghost"
       size="icon"
       data-state={copied ? "copied" : "not-copied"}
+      {...props}
       className={cn("transition-opacity relative flex-shrink-0", className)}
       onClick={handleCopy}
     >
+      <span className="sr-only">Copy</span>
       <Check
         className={cn(
           "w-4 h-4 absolute inset-0 m-auto transition-all duration-200",

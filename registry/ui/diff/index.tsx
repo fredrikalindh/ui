@@ -296,7 +296,7 @@ const Diff: React.FC<DiffProps> = ({
       {...restDivProps}
       style={{ ...defaultVars, ...style }}
       className={cn(
-        "font-mono text-[13px] w-full m-0 border-separate border-0 outline-none overflow-x-auto border-spacing-0",
+        "font-mono text-[0.8rem] w-full m-0 border-separate border-0 outline-none overflow-x-auto border-spacing-0",
         className
       )}
       onPointerDown={handlePointerDown}
@@ -341,7 +341,7 @@ const CollapsedIndicator: React.FC<{
     </tr>
     <tr
       className={cn(
-        "text-[13px] h-10 items-center font-mono",
+        "h-10 items-center font-mono",
         "select-none bg-muted text-muted-foreground"
       )}
     >

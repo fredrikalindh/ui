@@ -19,7 +19,7 @@ const CollapsibleCard = ({
     <Collapsible.Root
       {...props}
       className={cn(
-        "relative rounded-xl overflow-hidden border bg-code flex flex-col min-h-14",
+        "relative rounded-xl overflow-hidden border bg-card flex flex-col min-h-14",
         className
       )}
     >
@@ -67,7 +67,7 @@ const CollapsibleCardTitle: React.FC<
       </p>
       {title && (
         <CopyButton
-          text={title}
+          value={title}
           className="opacity-0 group-hover:opacity-100 data-[state=copied]:opacity-100"
         />
       )}
