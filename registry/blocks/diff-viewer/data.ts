@@ -158,3 +158,64 @@ index 1234567..2345678 100644
 // +  prop="value"
 // +/>
 // -<Component prop="value" />`;
+
+// export const DIFF_DIFF = `diff --git a/diff.tsx b/diff.tsx
+// index 1234567..2345678 100644
+// --- a/diff.tsx
+// +++ b/diff.tsx
+// @@ -11,11 +11,14 @@ const DiffViewer = () => {
+//      <CollapsibleCard
+//        data-section-id="diff-viewer"
+//        id="diff-viewer"
+// -      className='my-8 text-[0.8rem] w-full'
+// +      className="my-2 text-[0.8rem] w-full"
+//        title="File Changes"
+//        defaultOpen
+//      >
+//       <CollapsibleCardHeader>
+//         <CollapsibleCardTitle title={file.newPath}>
+//           {file.newPath}
+//         </CollapsibleCardTitle>
+//        </CollapsibleCardHeader>
+//        <CollapsibleCardContent>
+// -        <Diff fileName="file-changes.tsx" hunks={file.hunks} type={file.type} />
+// +        <Diff fileName="file-changes.tsx" hunks={file.hunks} type={file.type}>
+// +          {file.hunks.map((hunk) => (
+// +            <Hunk
+// +              key={hunk.type === "hunk" ? hunk.content : hunk.id}
+// +              hunk={hunk}
+// +            />
+// +          ))}
+// +        </Diff>
+//        </CollapsibleCardContent>
+//      </CollapsibleCard>
+//    );`;
+export const DIFF_DIFF = `diff --git a/diff.tsx b/diff.tsx
+index 1234567..2345678 100644
+--- a/diff.tsx
++++ b/diff.tsx
+@@ -1,16 +1,16 @@
+ export function DiffViewer({
+   patch,
++  options,
+ }: {
+   patch: string;
++  options?: Partial<ParseOptions>;
+ }) {
+-  const files = parseDiff(patch);
++  const files = parseDiff(patch, options);
+ 
+   return (
+-    <div className="flex flex-col">
++    <div className="flex flex-col gap-2">
+      {files.map((file) => (
+        <Diff key={file.name} fileName={file.name} hunks={file.hunks} type={file.type}>
+          {file.hunks.map((hunk) => (
+            <Hunk key={hunk.type === "hunk" ? hunk.content : hunk.id} hunk={hunk} />
+          ))}
+        </Diff>
+      ))}
+    </div>
+   );
+ }
+`;

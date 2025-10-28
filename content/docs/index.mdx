@@ -4,27 +4,29 @@ description: An opinionated simple diff viewer for React.
 ---
 
 import { DiffViewer } from "@/registry/blocks/diff-viewer/diff-viewer";
-import { EXAMPLE_DIFF, SIMPLE_DIFF, DISSIMILAR_DIFF, MIXED_DIFF, MIXED_DIFF2 } from '@/registry/blocks/diff-viewer/data';
+import { EXAMPLE_DIFF, SIMPLE_DIFF, DISSIMILAR_DIFF, MIXED_DIFF, MIXED_DIFF2, DIFF_DIFF } from '@/registry/blocks/diff-viewer/data';
 
 
-<DiffViewer patch={EXAMPLE_DIFF} />
+<DiffViewer patch={DIFF_DIFF} />
 
 ## Installation
 
 
 ```bash
-npx shadcn@latest add diff-viewer
+npx shadcn@latest add https://ui.fredrika.dev/r/diff-viewer.json
 ```
 
-## Usage
+{/* ## Usage
 
 Render the diff viewer with the `patch` prop.
 
 ```tsx
-import { parseDiff, Diff, Hunk, Link } from "@/registry/ui/diff/parse-diff";
+import { parseDiff } from "@/ui/diff/utils";
+import { Diff, Hunk, Link } from "@/ui/diff";
 
 const DiffViewer = () => {
   const files = parseDiff(diff);
+
   return (
     <div>
       {files.map((file) => (
@@ -37,7 +39,7 @@ const DiffViewer = () => {
     </div>
   );
 };
-```
+``` */}
 
 ## How it works
 

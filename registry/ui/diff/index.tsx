@@ -6,15 +6,15 @@ import { refractor } from "refractor/all";
 
 import "./theme.css";
 
-import { guessLang } from "./guess-lang";
 import { ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
+  guessLang,
   Hunk as HunkType,
   SkipBlock,
   File,
   Line as LineType,
-} from "./utils/parse";
+} from "./utils";
 
 /* -------------------------------------------------------------------------- */
 /*                                — Helpers —                                 */
@@ -194,4 +194,4 @@ const Line: React.FC<{
   );
 };
 
-export { Diff };
+export { Diff, Hunk };

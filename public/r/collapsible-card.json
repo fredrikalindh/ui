@@ -1,0 +1,43 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "collapsible-card",
+  "type": "registry:component",
+  "title": "Collapsible Card",
+  "description": "Collapsible container with header and content",
+  "registryDependencies": [
+    "button",
+    "copy-button"
+  ],
+  "files": [
+    {
+      "path": "registry/ui/collapsible-card.tsx",
+      "content": "\"use client\";\n\nimport React, { useLayoutEffect, useRef } from \"react\";\nimport { Fade } from \"@/components/blur-fade/blur-fade\";\nimport { cn } from \"@/lib/utils\";\n\nimport { ChevronDown } from \"lucide-react\";\nimport * as Collapsible from \"@radix-ui/react-collapsible\";\nimport { Button } from \"./button\";\nimport { CopyButton } from \"./copy-button\";\nimport { clamp } from \"@/lib/clamp\";\n\nconst CollapsibleCard = ({\n  className,\n  children,\n  ...props\n}: Collapsible.CollapsibleProps) => {\n  return (\n    <Collapsible.Root\n      {...props}\n      className={cn(\n        \"relative rounded-xl overflow-hidden border bg-card flex flex-col min-h-14\",\n        className\n      )}\n    >\n      {children}\n    </Collapsible.Root>\n  );\n};\n\nconst CollapsibleCardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({\n  className,\n  children,\n  ...props\n}) => (\n  <Collapsible.Trigger asChild>\n    <div\n      {...props}\n      className={cn(\n        \"absolute h-14 inset-x-4 z-20\",\n        \"flex items-center gap-2 justify-between\",\n        className\n      )}\n    >\n      <Button variant=\"ghost\" size=\"icon\" className=\"h-8 w-8\">\n        <ChevronDown className=\"h-4 w-4 transition-transform duration-200 [[data-state=closed]_&]:-rotate-90\" />\n      </Button>\n      {children}\n    </div>\n  </Collapsible.Trigger>\n);\n\n// TODO: remove copy button from component, move to docs example\nconst CollapsibleCardTitle: React.FC<\n  React.HTMLAttributes<HTMLSpanElement> & { title?: string }\n> = ({ className, title, children, ...p }) => {\n  return (\n    <div className=\"flex items-center gap-2 group flex-1 min-w-0 overflow-hidden flex-end\">\n      <p\n        {...p}\n        className={cn(\n          \"text-sm text-muted-foreground text-nowrap truncate min-w-0\",\n          className\n        )}\n      >\n        {children}\n      </p>\n      {title && (\n        <CopyButton\n          value={title}\n          className=\"opacity-0 group-hover:opacity-100 data-[state=copied]:opacity-100\"\n        />\n      )}\n    </div>\n  );\n};\n\nconst CollapsibleCardContent: React.FC<\n  React.HTMLAttributes<HTMLDivElement>\n> = ({ className, ...props }) => {\n  const bottomFadeRef = useRef<HTMLDivElement>(null);\n  const topFadeRef = useRef<HTMLDivElement>(null);\n  const contentRef = useRef<HTMLDivElement>(null);\n\n  useLayoutEffect(() => {\n    if (contentRef.current) {\n      if (contentRef.current.scrollTop > 0 && topFadeRef.current) {\n        topFadeRef.current.style.opacity = \"1\";\n      }\n      if (\n        contentRef.current.scrollTop + contentRef.current.clientHeight <\n          contentRef.current.scrollHeight &&\n        bottomFadeRef.current\n      ) {\n        bottomFadeRef.current.style.opacity = \"1\";\n      }\n    }\n  }, []);\n\n  function onScroll(e: React.UIEvent<HTMLDivElement>) {\n    const opacityTop = clamp(e.currentTarget.scrollTop / 15, [0, 1]);\n    topFadeRef.current!.style.opacity = String(opacityTop);\n    const scrollBottom =\n      e.currentTarget.scrollHeight -\n      e.currentTarget.scrollTop -\n      e.currentTarget.clientHeight;\n    const opacityBottom = clamp(scrollBottom / 15, [0, 1]);\n    bottomFadeRef.current!.style.opacity = String(opacityBottom);\n  }\n\n  return (\n    <Collapsible.Content\n      className={cn(\n        \"overflow-hidden\",\n        \"data-[state=open]:animate-collapsible-down\",\n        \"data-[state=closed]:animate-collapsible-up\"\n      )}\n    >\n      <div\n        {...props}\n        ref={contentRef}\n        className={cn(\"max-h-[70svh] pt-14 pb-4 overflow-auto\", className)}\n        onScroll={onScroll}\n      />\n      <Fade\n        ref={topFadeRef}\n        background=\"var(--color-background)\"\n        className=\"inset-x-0 top-0 h-17 z-10 rounded-t-xl\"\n        side=\"top\"\n        blur=\"4px\"\n        stop=\"60%\"\n        style={{\n          opacity: 0,\n        }}\n      />\n      <Fade\n        ref={bottomFadeRef}\n        side=\"bottom\"\n        background=\"var(--color-background)\"\n        className=\"inset-x-0 bottom-0 h-16 z-10 rounded-b-xl\"\n        stop=\"50%\"\n        blur=\"2px\"\n        style={{\n          opacity: 0,\n        }}\n      />\n    </Collapsible.Content>\n  );\n};\n\nexport {\n  CollapsibleCard,\n  CollapsibleCardHeader,\n  CollapsibleCardTitle,\n  CollapsibleCardContent,\n};\n",
+      "type": "registry:component",
+      "target": "components/ui/collapsible-card.tsx"
+    },
+    {
+      "path": "components/blur-fade/blur-fade.tsx",
+      "content": "import * as React from \"react\";\n\nimport { cn } from \"@/lib/utils\";\nimport styles from \"./fade.module.css\";\n\nexport function Fade({\n  stop,\n  blur,\n  side = \"top\",\n  className,\n  background,\n  style,\n  ref,\n  debug,\n}: {\n  stop?: string;\n  blur?: string;\n  side: \"top\" | \"bottom\" | \"left\" | \"right\";\n  className?: string;\n  background: string;\n  debug?: boolean;\n  style?: React.CSSProperties;\n  ref?: React.Ref<HTMLDivElement>;\n}) {\n  return (\n    <div\n      ref={ref}\n      aria-hidden\n      className={cn(styles.root, className)}\n      data-side={side}\n      style={\n        {\n          \"--stop\": stop,\n          \"--blur\": blur,\n          \"--background\": background,\n          ...(debug && {\n            outline: \"2px solid var(--color-orange)\",\n          }),\n          ...style,\n        } as React.CSSProperties\n      }\n    />\n  );\n}\n",
+      "type": "registry:component",
+      "target": "components/blur-fade/blur-fade.tsx"
+    },
+    {
+      "path": "components/blur-fade/fade.module.css",
+      "content": ".root {\n  --blur: 4px;\n  --stop: 25%;\n  position: absolute;\n  pointer-events: none;\n  user-select: none;\n  backdrop-filter: blur(var(--blur));\n\n  &[data-side=\"top\"] {\n    background: linear-gradient(to top, transparent, var(--background));\n    mask-image: linear-gradient(\n      to bottom,\n      var(--background) var(--stop),\n      transparent\n    );\n  }\n\n  &[data-side=\"left\"] {\n    background: linear-gradient(to left, transparent, var(--background));\n    mask-image: linear-gradient(\n      to right,\n      var(--background) var(--stop),\n      transparent\n    );\n  }\n\n  &[data-side=\"right\"] {\n    background: linear-gradient(to right, transparent, var(--background));\n    mask-image: linear-gradient(\n      to left,\n      var(--background) var(--stop),\n      transparent\n    );\n  }\n\n  &[data-side=\"bottom\"] {\n    background: linear-gradient(to bottom, transparent, var(--background));\n    mask-image: linear-gradient(\n      to top,\n      var(--background) var(--stop),\n      transparent\n    );\n  }\n}\n",
+      "type": "registry:component",
+      "target": "components/blur-fade/fade.module.css"
+    },
+    {
+      "path": "lib/clamp.ts",
+      "content": "export function clamp(val: number, [min, max]: [number, number]): number {\n    return Math.min(Math.max(val, min), max);\n  }\n  ",
+      "type": "registry:lib",
+      "target": "lib/clamp.ts"
+    },
+    {
+      "path": "lib/utils.ts",
+      "content": "import { clsx, type ClassValue } from \"clsx\"\nimport { twMerge } from \"tailwind-merge\"\n\nexport function cn(...inputs: ClassValue[]) {\n  return twMerge(clsx(inputs))\n}\n",
+      "type": "registry:lib",
+      "target": "lib/utils.ts"
+    }
+  ]
+}

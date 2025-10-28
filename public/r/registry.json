@@ -1,18 +1,163 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
-  "name": "acme",
-  "homepage": "https://acme.com",
+  "name": "fredrika ui",
+  "homepage": "https://ui.fredrika.dev",
   "items": [
     {
       "name": "diff-viewer",
       "type": "registry:component",
       "title": "Diff Viewer",
       "description": "A diff viewer component",
-      "registryDependencies": ["button", "collapsible-card", "diff"],
+      "registryDependencies": ["button", "badge"],
       "files": [
         {
+          "path": "registry/ui/diff/index.tsx",
+          "type": "registry:component",
+          "target": "components/ui/diff/index.tsx"
+        },
+        {
+          "path": "registry/ui/diff/theme.css",
+          "type": "registry:component",
+          "target": "components/ui/diff/theme.css"
+        },
+        {
+          "path": "registry/ui/diff/utils/index.ts",
+          "type": "registry:lib",
+          "target": "components/ui/diff/utils/index.ts"
+        },
+        {
+          "path": "registry/ui/diff/utils/parse.ts",
+          "type": "registry:lib",
+          "target": "components/ui/diff/utils/parse.ts"
+        },
+        {
+          "path": "registry/ui/diff/utils/parse-headers.ts",
+          "type": "registry:lib",
+          "target": "components/ui/diff/utils/parse-headers.ts"
+        },
+        {
+          "path": "registry/ui/diff/utils/guess-lang.ts",
+          "type": "registry:lib",
+          "target": "components/ui/diff/utils/guess-lang.ts"
+        },
+        {
+          "path": "registry/ui/collapsible-card.tsx",
+          "type": "registry:component",
+          "target": "components/ui/collapsible-card.tsx"
+        },
+        {
+          "path": "registry/ui/copy-button.tsx",
+          "type": "registry:component",
+          "target": "components/ui/copy-button.tsx"
+        },
+        {
+          "path": "components/blur-fade/blur-fade.tsx",
+          "type": "registry:component",
+          "target": "components/blur-fade/blur-fade.tsx"
+        },
+        {
+          "path": "components/blur-fade/fade.module.css",
+          "type": "registry:component",
+          "target": "components/blur-fade/fade.module.css"
+        },
+        {
+          "path": "lib/clamp.ts",
+          "type": "registry:lib",
+          "target": "lib/clamp.ts"
+        },
+        {
+          "path": "lib/utils.ts",
+          "type": "registry:lib",
+          "target": "lib/utils.ts"
+        },
+        {
+          "path": "registry/blocks/diff-viewer/page.tsx",
+          "type": "registry:page",
+          "target": "app/diff-viewer/page.tsx"
+        },
+        {
           "path": "registry/blocks/diff-viewer/diff-viewer.tsx",
-          "type": "registry:component"
+          "type": "registry:component",
+          "target": "components/blocks/diff-viewer/diff-viewer.tsx"
+        }
+      ]
+    },
+    {
+      "name": "copy-button",
+      "type": "registry:component",
+      "title": "Copy Button",
+      "description": "Copy to clipboard button",
+      "registryDependencies": ["button"],
+      "files": [
+        {
+          "path": "registry/ui/copy-button.tsx",
+          "type": "registry:component",
+          "target": "components/ui/copy-button.tsx"
+        },
+        {
+          "path": "lib/utils.ts",
+          "type": "registry:lib",
+          "target": "lib/utils.ts"
+        }
+      ]
+    },
+    {
+      "name": "collapsible-card",
+      "type": "registry:component",
+      "title": "Collapsible Card",
+      "description": "Collapsible container with header and content",
+      "registryDependencies": ["button", "copy-button"],
+      "files": [
+        {
+          "path": "registry/ui/collapsible-card.tsx",
+          "type": "registry:component",
+          "target": "components/ui/collapsible-card.tsx"
+        },
+        {
+          "path": "components/blur-fade/blur-fade.tsx",
+          "type": "registry:component",
+          "target": "components/blur-fade/blur-fade.tsx"
+        },
+        {
+          "path": "components/blur-fade/fade.module.css",
+          "type": "registry:component",
+          "target": "components/blur-fade/fade.module.css"
+        },
+        {
+          "path": "lib/clamp.ts",
+          "type": "registry:lib",
+          "target": "lib/clamp.ts"
+        },
+        {
+          "path": "lib/utils.ts",
+          "type": "registry:lib",
+          "target": "lib/utils.ts"
+        }
+      ]
+    },
+    {
+      "name": "button",
+      "type": "registry:component",
+      "title": "Button",
+      "description": "UI button component",
+      "files": [
+        {
+          "path": "registry/ui/button.tsx",
+          "type": "registry:component",
+          "target": "components/ui/button.tsx"
+        }
+      ]
+    },
+    {
+      "name": "badge",
+      "type": "registry:component",
+      "title": "Badge",
+      "description": "UI badge component",
+      "files": [
+        {
+          "path": "components/ui/badge.tsx",
+          "type": "registry:component",
+          "target": "components/ui/badge.tsx"
         }
       ]
     }

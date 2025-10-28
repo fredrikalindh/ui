@@ -1,5 +1,4 @@
-import { Diff } from "@/registry/ui/diff";
-import { EXAMPLE_DIFF } from "./data";
+import { Diff, Hunk } from "@/registry/ui/diff";
 
 import {
   CollapsibleCard,
@@ -11,12 +10,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { parseDiff, ParseOptions } from "@/registry/ui/diff/utils/parse";
 
-// TODO: scroll area?
 export function DiffViewer({
-  patch = EXAMPLE_DIFF,
+  patch,
   options = {},
 }: {
-  patch?: string;
+  patch: string;
   options?: Partial<ParseOptions>;
 }) {
   const [file] = parseDiff(patch, options);
@@ -43,13 +41,14 @@ export function DiffViewer({
         </span> */}
       </CollapsibleCardHeader>
       <CollapsibleCardContent>
-        <Diff
-          fileName="file-changes.tsx"
-          hunks={file.hunks}
-          type={file.type}
-          // status="modified"
-          // selectable={false}
-        />
+        <Diff fileName="file-changes.tsx" hunks={file.hunks} type={file.type}>
+          {file.hunks.map((hunk) => (
+            <Hunk
+              key={hunk.type === "hunk" ? hunk.content : hunk.id}
+              hunk={hunk}
+            />
+          ))}
+        </Diff>
       </CollapsibleCardContent>
     </CollapsibleCard>
   );
