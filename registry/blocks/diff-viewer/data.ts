@@ -5,11 +5,11 @@ index fa4d9c4..8d980f1 100644
 @@ -1,40 +1,55 @@
  import React, { useLayoutEffect, useRef, useState } from "react";
  import { Fade } from "./blur-fade/blur-fade";
--import { useTheme } from "next-themes";
  import { cn } from "@workspace/ui/lib/utils";
- import { Button } from "@workspace/ui/components/button";
 -import { Check, Copy } from "lucide-react";
 +import { Check, Copy, ChevronDown } from "lucide-react";
+ import { Button } from "@workspace/ui/components/button";
+-import { useTheme } from "next-themes";
 +import * as Collapsible from "@radix-ui/react-collapsible";
  
  const Root = ({
@@ -21,14 +21,13 @@ index fa4d9c4..8d980f1 100644
 +}: React.ComponentProps<"div"> & {
 +  defaultOpen?: boolean;
 +}) => {
-+  const [open, setOpen] = useState(defaultOpen);
-+
+ 
    return (
-+    <Collapsible.Root open={open} onOpenChange={setOpen}>
++    <Collapsible.Root defaultOpen={defaultOpen}>
 +      <div
 +        {...props}
 +        className={cn(
-+          "relative text-[13px] rounded-xl overflow-hidden border bg-code flex flex-col min-h-16",
++          "relative text-[13px] rounded-xl overflow-hidden border bg-code min-h-16",
 +          className
 +        )}
 +      >
@@ -47,7 +46,7 @@ index fa4d9c4..8d980f1 100644
      <div
        {...props}
        className={cn(
--        "relative text-[13px] rounded-xl overflow-hidden border bg-code flex flex-col",
+-        "relative text-[13p] rounded-xl overflow-hidden border bg-code",
 +        "absolute top-3 inset-x-4 z-20",
 +        "flex items-center gap-2 justify-between",
          className

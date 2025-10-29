@@ -1,7 +1,10 @@
-import { source } from "@/lib/source";
-import { mdxComponents } from "@/components/mdx-components";
-
 import { notFound } from "next/navigation";
+
+import { DocsPreviewPane } from "@/components/docs-preview";
+import { DiffDocsPreviewProvider } from "@/components/diff-docs-provider";
+import { mdxComponents } from "@/components/mdx-components";
+import { source } from "@/lib/source";
+import { Fade } from "@/components/blur-fade/blur-fade";
 
 export const revalidate = false;
 export const dynamic = "force-static";
@@ -73,32 +76,41 @@ export default async function Page(props: {
   const MDX = doc.body;
 
   return (
-    <div
-      data-slot="docs"
-      className="flex items-stretch text-[1.05rem] sm:text-[15px] xl:w-full"
-    >
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="h-(--top-spacing) shrink-0" />
-        <div className="mx-auto flex w-full max-w-4xl min-w-0 flex-1 flex-col gap-8 px-4 py-6 text-neutral-800 md:px-0 lg:py-8 dark:text-neutral-300">
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-start justify-between">
-                <h1 className="scroll-m-20 text-6xl font-medium tracking-tight sm:text-7xl xl:text-8xl font-serif">
-                  {doc.title}
-                </h1>
-              </div>
-              {doc.description && (
-                <p className="text-muted-foreground text-[1.05rem] text-balance sm:text-base">
-                  {doc.description}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="w-full flex-1">
-            <MDX components={mdxComponents} />
-          </div>
+    <DiffDocsPreviewProvider>
+      <div
+        data-slot="docs"
+        className="text-[1.05rem] sm:text-[15px] xl:w-full grid w-full min-w-0 lg:grid-cols-2"
+      >
+        <div className="flex flex-col gap-2 px-12 py-32 pb-100">
+          <h1 className="scroll-m-20 text-6xl font-medium tracking-tight font-serif sm:text-7xl xl:text-8xl">
+            {doc.title}
+          </h1>
+
+          {doc.description && (
+            <p className="text-balance text-lg text-muted-foreground mt-4 mb-16">
+              {doc.description}
+            </p>
+          )}
+
+          <MDX components={mdxComponents} />
         </div>
+        <DocsPreviewPane />
+        <Fade
+          side="top"
+          background="var(--color-background)"
+          blur="4px"
+          stop="50%"
+          className="!fixed inset-x-0 top-0 h-32 z-10"
+        />
+        <Fade
+          side="bottom"
+          background="var(--color-background)"
+          blur="4px"
+          stop="25%"
+          debug
+          className="!fixed inset-x-0 bottom-0 h-1/6 z-10"
+        />
       </div>
-    </div>
+    </DiffDocsPreviewProvider>
   );
 }

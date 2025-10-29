@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
+import { PreviewSection } from "./docs-preview";
 import { CopyButton } from "../registry/ui/copy-button";
 import { CodeBlockCommand } from "./code-block-command";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
@@ -81,7 +82,10 @@ export const mdxComponents = {
   ),
   p: ({ className, ...props }: React.ComponentProps<"p">) => (
     <p
-      className={cn("leading-relaxed [&:not(:first-child)]:mt-6", className)}
+      className={cn(
+        "leading-relaxed [&:not(:first-child)]:mt-6 text-lg",
+        className
+      )}
       {...props}
     />
   ),
@@ -205,7 +209,7 @@ export const mdxComponents = {
       return (
         <code
           className={cn(
-            "bg-muted relative rounded-md px-[0.3rem] py-[0.2rem] font-mono text-[0.8rem] break-words outline-none",
+            "bg-muted relative rounded-md px-[0.3rem] py-[0.2rem] font-mono text-sm break-words outline-none",
             className
           )}
           {...props}
@@ -316,32 +320,11 @@ export const mdxComponents = {
     <div className={cn(className)} {...props} />
   ),
   Button,
-  // Callout,
-  // Accordion,
-  // AccordionContent,
-  // AccordionItem,
-  // AccordionTrigger,
-  // Alert,
-  // AlertTitle,
-  // AlertDescription,
-  // AspectRatio,
   CodeTabs,
-  // ComponentPreview,
-  // ComponentSource,
-  // CodeCollapsibleWrapper,
-  // ComponentsList,
+  Preview: PreviewSection,
   Link: ({ className, ...props }: React.ComponentProps<typeof Link>) => (
     <Link
       className={cn("font-medium underline underline-offset-4", className)}
-      {...props}
-    />
-  ),
-  LinkedCard: ({ className, ...props }: React.ComponentProps<typeof Link>) => (
-    <Link
-      className={cn(
-        "bg-surface text-surface-foreground hover:bg-surface/80 flex w-full flex-col items-center rounded-xl p-6 transition-colors sm:p-10",
-        className
-      )}
       {...props}
     />
   ),

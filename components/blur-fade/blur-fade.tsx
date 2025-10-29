@@ -34,7 +34,7 @@ export function Fade({
           "--blur": blur,
           "--background": background,
           ...(debug && {
-            outline: "2px solid var(--color-orange)",
+            outline: "2px solid red",
           }),
           ...style,
         } as React.CSSProperties

@@ -37,9 +37,10 @@ export interface ParseOptions {
   maxDiffDistance: number;
   similarityThreshold: number;
   mergeModifiedLines: boolean;
+  inlineMaxCharEdits: number;
 }
 
-const changeRatio = (a: string, b: string): number => {
+const calculateChangeRatio = (a: string, b: string): number => {
   const totalChars = a.length + b.length;
   if (totalChars === 0) return 1;
   const tokens = diffWords(a, b);
@@ -49,22 +50,14 @@ const changeRatio = (a: string, b: string): number => {
   return changedChars / totalChars;
 };
 
-const isWithinSimilarityThreshold = (
-  ratio: number,
-  similarityThreshold: number
-): boolean => {
-  return ratio <= similarityThreshold;
-};
-
-const isTextSimilarEnough = (
+const isSimilarEnough = (
   a: string,
   b: string,
   similarityThreshold: number
 ): boolean => {
-  if (similarityThreshold === 1) return true;
-  if (similarityThreshold === 0) return false;
-  const ratio = changeRatio(a, b);
-  return isWithinSimilarityThreshold(ratio, similarityThreshold);
+  if (similarityThreshold <= 0) return a === b;
+  if (similarityThreshold >= 1) return true;
+  return calculateChangeRatio(a, b) <= similarityThreshold;
 };
 
 const changeToLine = (change: _Change): Line => ({
@@ -110,7 +103,8 @@ function diffCharsIfWithinEditLimit(
 
 const buildInlineDiffSegments = (
   current: _Change,
-  next: _Change
+  next: _Change,
+  options: ParseOptions
 ): Line["content"] => {
   const segments: LineSegment[] = diffWords(current.content, next.content).map(
     (token) => ({
@@ -134,7 +128,11 @@ const buildInlineDiffSegments = (
     const current = segments[i];
     const next = segments[i + 1];
     if (current.type === "delete" && next?.type === "insert") {
-      const charDiff = diffCharsIfWithinEditLimit(current.value, next.value);
+      const charDiff = diffCharsIfWithinEditLimit(
+        current.value,
+        next.value,
+        options.inlineMaxCharEdits
+      );
 
       if (!charDiff.exceededLimit) {
         charDiff.diffs.forEach(mergeIntoResult);
@@ -163,7 +161,7 @@ const mergeAdjacentLines = (
       next &&
       current.type === "delete" &&
       next.type === "insert" &&
-      isTextSimilarEnough(
+      isSimilarEnough(
         current.content,
         next.content,
         options.similarityThreshold
@@ -175,7 +173,7 @@ const mergeAdjacentLines = (
         isNormal: true,
         oldLineNumber: current.lineNumber,
         newLineNumber: next.lineNumber,
-        content: buildInlineDiffSegments(current, next),
+        content: buildInlineDiffSegments(current, next, options),
       });
       i++;
     } else {
@@ -222,10 +220,9 @@ function findBestInsertForDelete(
     if (add.lineNumber < lower) continue;
     if (add.lineNumber > upper) break;
 
-    const ratio = changeRatio(del.content, add.content);
+    const ratio = calculateChangeRatio(del.content, add.content);
 
-    if (!isWithinSimilarityThreshold(ratio, options.similarityThreshold))
-      continue;
+    if (ratio > options.similarityThreshold) continue;
 
     if (ratio < bestRatio) {
       bestRatio = ratio;
@@ -290,13 +287,18 @@ function emitNormal(out: Line[], c: _Change) {
   out.push(changeToLine(c));
 }
 
-function emitModified(out: Line[], del: DeleteChange, add: InsertChange) {
+function emitModified(
+  out: Line[],
+  del: DeleteChange,
+  add: InsertChange,
+  options: ParseOptions
+) {
   out.push({
     oldLineNumber: del.lineNumber,
     newLineNumber: add.lineNumber,
     type: "normal",
     isNormal: true,
-    content: buildInlineDiffSegments(del, add),
+    content: buildInlineDiffSegments(del, add, options),
   });
 }
 
@@ -304,7 +306,8 @@ function emitLines(
   changes: _Change[],
   pairOfDel: Int32Array,
   pairOfAdd: Int32Array,
-  unpairedDelPrefix: Int32Array
+  unpairedDelPrefix: Int32Array,
+  options: ParseOptions
 ): Line[] {
   const out: Line[] = [];
   const processed = new Uint8Array(changes.length);
@@ -339,7 +342,7 @@ function emitLines(
         }
       } else {
         const add = changes[pairedAddIdx] as InsertChange;
-        emitModified(out, c, add);
+        emitModified(out, c, add, options);
         processed[i] = 1;
         processed[pairedAddIdx] = 1;
       }
@@ -351,7 +354,7 @@ function emitLines(
         emitNormal(out, c);
       } else {
         const del = changes[pairedDelIdx] as DeleteChange;
-        emitModified(out, del, c);
+        emitModified(out, del, c, options);
         processed[i] = 1;
         processed[pairedDelIdx] = 1;
       }
@@ -376,7 +379,7 @@ export function mergeModifiedLines(
 
   const unpairedDelPrefix = buildUnpairedDeletePrefix(changes, pairOfDel);
 
-  return emitLines(changes, pairOfDel, pairOfAdd, unpairedDelPrefix);
+  return emitLines(changes, pairOfDel, pairOfAdd, unpairedDelPrefix, options);
 }
 
 const parseHunk = (hunk: _Hunk, options: ParseOptions): Hunk => {
@@ -429,6 +432,7 @@ const defaultOptions: ParseOptions = {
   maxDiffDistance: 30,
   similarityThreshold: 0.45,
   mergeModifiedLines: true,
+  inlineMaxCharEdits: 4,
 };
 
 export const parseDiff = (

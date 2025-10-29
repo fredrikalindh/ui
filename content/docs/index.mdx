@@ -3,22 +3,24 @@ title: Unified diff viewer
 description: An opinionated simple diff viewer for React. 
 ---
 
-import { DiffViewer } from "@/registry/blocks/diff-viewer/diff-viewer";
-import { EXAMPLE_DIFF, SIMPLE_DIFF, DISSIMILAR_DIFF, MIXED_DIFF, MIXED_DIFF2, DIFF_DIFF } from '@/registry/blocks/diff-viewer/data';
-
-
-<DiffViewer patch={DIFF_DIFF} />
+<Preview
+  id="overview"
+  label="Unified diff"
+  description="A real git patch rendered with grouping heuristics."
+  src="/previews/diff-viewer/overview"
+>
+The unified diff viewer parses standard unified diffs and renders them as minimally as possible. It merges nearby insertions and deletions into a single “modified” row and shows small character-level edits inline to make it easier to understand changes.
+</Preview>
 
 ## Installation
-
 
 ```bash
 npx shadcn@latest add https://ui.fredrika.dev/r/diff-viewer.json
 ```
 
-{/* ## Usage
+## Usage
 
-Render the diff viewer with the `patch` prop.
+Use the `parseDiff` to convert a diff string into a list of files. Passing `children` to the `Diff` is optional, just passing the `hunks` is fine too.
 
 ```tsx
 import { parseDiff } from "@/ui/diff/utils";
@@ -39,42 +41,124 @@ const DiffViewer = () => {
     </div>
   );
 };
-``` */}
+```
 
-## How it works
+## Parsing diffs
 
-This is what GitHub shows for this example diff:
-<DiffViewer patch={SIMPLE_DIFF} options={{ mergeModifiedLines: false }} />
+<Preview
+  id="github"
+  label="GitHub baseline"
+  description="Shows the raw diff without any grouping."
+  src="/previews/diff-viewer/github"
+>
+This is how GitHub would show this diff. Inserted and deleted blocks are rendered separately, sometimes displayed far apart. 
+Take a look at line 4, where the `ChevronDown` icon is added to the import. You need to read two lines to understand that only an icon was added and nothing deleted.
 
+{/* TODO: explain the diff format */}
+</Preview>
 
-With merging of adjacent deleted and inserted lines, we can make it more readable:
+<Preview
+  id="merged"
+  label="Merge adjacent lines"
+  description="Adjacent insertions and deletions are grouped together."
+  src="/previews/diff-viewer/merged"
+>
+Now look at line 4 again. The separate insert and delete are merged together, making it much easier to understand what changed. 
 
-<DiffViewer patch={SIMPLE_DIFF} />
+The naive approach is to iterate over all changes and merge adjacent insertions and deletions into one "normal" line where segments are marked as `insert` or `delete`.
 
-Without any other logic, it will not be chaotic when the lines are very different:
+```ts
+const mergeAdjacentLines = (changes: _Change[]): Line[] => {
+  const out: Line[] = [];
+  for (let i = 0; i < changes.length; i++) {
+    const current = changes[i];
+    const next = changes[i + 1];
+    if (current.type === "delete" && next?.type === "insert") {
+      out.push({
+        ...current,
+        type: "normal",
+        isNormal: true,
+        oldLineNumber: current.lineNumber,
+        newLineNumber: next.lineNumber,
+        content: buildInlineDiffSegments(current, next),
+      });
+      i++; // Skip next
+    } else {
+      out.push(current);
+    }
+  }
 
-<DiffViewer patch={DISSIMILAR_DIFF} options={{ similarityThreshold: 1 }} />
+  return out;
+};
+```
 
-We can add a similarity threshold to the diff parser to merge lines that are similar.
+</Preview>
 
-<DiffViewer patch={DISSIMILAR_DIFF} />
+<Preview
+  id="dissimilarRaw"
+  label="No similarity threshold"
+  description="Highly dissimilar lines create noise without extra heuristics."
+  src="/previews/diff-viewer/dissimilarRaw"
+>
+The problem with just merging *every* delete+insert pair is that when the lines are very different, the result is noisy. See line 6 – not very nice. 
 
-In even more complex cases, we might want to merge lines that are similar but not adjacent.
+To solve this, we can add a similarity threshold. So only lines where the change ratio is less than the threshold are merged.
 
-<Tabs defaultValue="GitHub">
-  <TabsList>
-    <TabsTrigger value="GitHub">GitHub Style</TabsTrigger>
-    <TabsTrigger value="Merged Adjacent">Merge Adjacent Lines</TabsTrigger>
-    <TabsTrigger value="Similar">Merge Similar Lines</TabsTrigger>
-  </TabsList>
-  <TabsContent value="GitHub">
-    <DiffViewer patch={EXAMPLE_DIFF} options={{ mergeModifiedLines: false }} />
-  </TabsContent>
-  <TabsContent value="Merged Adjacent">
-    <DiffViewer patch={EXAMPLE_DIFF} options={{ mergeModifiedLines: true, maxDiffDistance: 1 }} />
-  </TabsContent>
-  <TabsContent value="Similar">
-    <DiffViewer patch={EXAMPLE_DIFF} />
-  </TabsContent>
-</Tabs>
+```ts
+const calculateChangeRatio = (a: string, b: string): number => {
+  const totalChars = a.length + b.length;
+  if (totalChars === 0) return 1;
+  const tokens = diffWords(a, b);
+  const changedChars = tokens
+    .filter((token) => token.added || token.removed)
+    .reduce((sum, token) => sum + token.value.length, 0);
+  return changedChars / totalChars;
+};
 
+// Then we check for it before merging
+if (current.type === "delete" && next.type === "insert" 
+  && calculateChangeRatio(current.content, next.content) < options.similarityThreshold) { /* ... */ }
+```
+</Preview>
+
+<Preview
+  id="dissimilar"
+  label="Similarity threshold"
+  description="Similar lines are merged even when they are not adjacent."
+  src="/previews/diff-viewer/dissimilar"
+>
+Decreasing the similarity threshold to `0.45` prevents the parser from merging line 6.
+
+But the diff doesn't always place deletions and insertions of modified lines next to each other. 
+
+Look at line 23. The deleted version of that line is displayed below line 42, making it very difficult to see that the only change is adding `min-h-16`.
+
+What if we find the best possible match for each deletion while maintaining the order? 
+</Preview>
+
+<Preview
+  id="complexMerged"
+  label="Large diff · Merge adjacent"
+  description="Adjacent blocks are merged to trim repeated context."
+  src="/previews/diff-viewer/complexMerged"
+>
+
+Now look at line 23 again. The separate insert and delete are merged together, making it much easier to understand what changed. 
+
+But why isn't the small typo that was fixed by adding `x` merged together? Try increasing the inline max char edits to see how it works.
+
+```ts
+const charDiff = diffCharsIfWithinEditLimit(
+  current.value,
+  next.value,
+  options.inlineMaxCharEdits
+);
+
+if (!charDiff.exceededLimit) {
+  charDiff.diffs.forEach(mergeIntoResult);
+  i++;
+} else {
+  result.push(current);
+}
+```
+</Preview>

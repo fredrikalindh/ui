@@ -7,7 +7,6 @@ import {
   CollapsibleCardContent,
 } from "@/registry/ui/collapsible-card";
 
-import { Badge } from "@/components/ui/badge";
 import { parseDiff, ParseOptions } from "@/registry/ui/diff/utils/parse";
 
 export function DiffViewer({
@@ -31,10 +30,6 @@ export function DiffViewer({
         <CollapsibleCardTitle title={file.newPath}>
           {file.newPath}
         </CollapsibleCardTitle>
-
-        <Badge variant="outline">
-          {file.type === "rename" ? "Renamed" : "Modified"}
-        </Badge>
       </CollapsibleCardHeader>
       <CollapsibleCardContent>
         <Diff fileName="file-changes.tsx" hunks={file.hunks} type={file.type}>

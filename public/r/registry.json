@@ -8,7 +8,7 @@
       "type": "registry:component",
       "title": "Diff Viewer",
       "description": "A diff viewer component",
-      "registryDependencies": ["button", "badge"],
+      "registryDependencies": ["button"],
       "files": [
         {
           "path": "registry/ui/diff/index.tsx",
@@ -140,19 +140,6 @@
           "path": "registry/ui/button.tsx",
           "type": "registry:component",
           "target": "components/ui/button.tsx"
-        }
-      ]
-    },
-    {
-      "name": "badge",
-      "type": "registry:component",
-      "title": "Badge",
-      "description": "UI badge component",
-      "files": [
-        {
-          "path": "components/ui/badge.tsx",
-          "type": "registry:component",
-          "target": "components/ui/badge.tsx"
         }
       ]
     }
