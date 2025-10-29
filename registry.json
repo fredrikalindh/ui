@@ -31,11 +31,6 @@
           "target": "components/ui/diff/utils/parse.ts"
         },
         {
-          "path": "registry/ui/diff/utils/parse-headers.ts",
-          "type": "registry:lib",
-          "target": "components/ui/diff/utils/parse-headers.ts"
-        },
-        {
           "path": "registry/ui/diff/utils/guess-lang.ts",
           "type": "registry:lib",
           "target": "components/ui/diff/utils/guess-lang.ts"

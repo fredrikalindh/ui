@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { parseDiff } from "../utils/parse";
+import { parseDiff, SkipBlock } from "../utils/parse";
 
 const header = `diff --git a/file.tsx b/file.tsx
 index 4def792..b63576c 100644
@@ -21,6 +21,8 @@ describe("insert skip blocks", () => {
     expect(files[0].hunks.length).toBe(2);
     expect(files[0].hunks?.[0].type).toBe("skip");
     expect(files[0].hunks?.[1].type).toBe("hunk");
+    const skip = files[0].hunks?.[0] as SkipBlock;
+    expect(skip.content).toBe("function foo");
   });
 
   test("inserts a skip block between separated chunks", () => {
@@ -60,6 +62,16 @@ describe("insert skip blocks", () => {
     const hasSkip = files[0].hunks.some((h) => h.type === "skip");
     expect(hasSkip).toBe(false);
   });
+  test("extracts context from the hunk header", () => {
+    const diff = `${header}@@ -257,7 +257,7 @@ export const FileChanges = ({ prMeta, files, prId }: FileChangesProps) => {
++ test`;
+
+    const files = parseDiff(diff);
+
+    expect(files.length).toBe(1);
+    const skip = files[0].hunks?.[0] as SkipBlock;
+    expect(skip.content).toBe(
+      "export const FileChanges = ({ prMeta, files, prId }: FileChangesProps) => {"
+    );
+  });
 });
-
-

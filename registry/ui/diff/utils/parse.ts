@@ -24,10 +24,9 @@ export interface Hunk extends Omit<_Hunk, "changes"> {
 }
 
 export interface SkipBlock {
-  id: number;
   count: number;
   type: "skip";
-  context?: string;
+  content: string;
 }
 
 export interface File extends Omit<_File, "hunks"> {
@@ -40,53 +39,54 @@ export interface ParseOptions {
   mergeModifiedLines: boolean;
 }
 
-/**
- * Computes how much of the combined content changed between two strings.
- * A lower ratio indicates a closer match.
- */
 const changeRatio = (a: string, b: string): number => {
+  const totalChars = a.length + b.length;
+  if (totalChars === 0) return 1;
   const tokens = diffWords(a, b);
   const changedChars = tokens
     .filter((token) => token.added || token.removed)
     .reduce((sum, token) => sum + token.value.length, 0);
-  const totalChars = a.length + b.length;
-  return totalChars === 0 ? 1 : changedChars / totalChars;
+  return changedChars / totalChars;
 };
 
-const isSimilar = (
+const isWithinSimilarityThreshold = (
+  ratio: number,
+  similarityThreshold: number
+): boolean => {
+  return ratio <= similarityThreshold;
+};
+
+const isTextSimilarEnough = (
   a: string,
   b: string,
   similarityThreshold: number
 ): boolean => {
   if (similarityThreshold === 1) return true;
-
-  if (a.trimEnd() === b.trimEnd()) return true;
-
-  return changeRatio(a, b) < similarityThreshold;
+  if (similarityThreshold === 0) return false;
+  const ratio = changeRatio(a, b);
+  return isWithinSimilarityThreshold(ratio, similarityThreshold);
 };
 
-const changeToLine = (change: _Change): Line => {
-  return {
-    ...change,
-    content: [
-      {
-        value: change.content,
-        type: "normal",
-      },
-    ],
-  };
-};
+const changeToLine = (change: _Change): Line => ({
+  ...change,
+  content: [
+    {
+      value: change.content,
+      type: "normal",
+    },
+  ],
+});
 
-function roughlyEqual(
+function diffCharsIfWithinEditLimit(
   a: string,
   b: string,
   maxEdits = 4
 ):
   | {
-      equal: false;
+      exceededLimit: true;
     }
   | {
-      equal: true;
+      exceededLimit: false;
       diffs: LineSegment[];
     } {
   const diffs = diffChars(a, b);
@@ -95,14 +95,12 @@ function roughlyEqual(
   for (const part of diffs) {
     if (part.added || part.removed) {
       edits += part.value.length;
-      if (edits > maxEdits) return { equal: false };
+      if (edits > maxEdits) return { exceededLimit: true };
     }
   }
 
-  if (edits > maxEdits) return { equal: false };
-
   return {
-    equal: true,
+    exceededLimit: false,
     diffs: diffs.map((d) => ({
       value: d.value,
       type: d.added ? "insert" : d.removed ? "delete" : "normal",
@@ -110,7 +108,10 @@ function roughlyEqual(
   };
 }
 
-const modifiedContent = (current: _Change, next: _Change): Line["content"] => {
+const buildInlineDiffSegments = (
+  current: _Change,
+  next: _Change
+): Line["content"] => {
   const segments: LineSegment[] = diffWords(current.content, next.content).map(
     (token) => ({
       value: token.value,
@@ -130,18 +131,20 @@ const modifiedContent = (current: _Change, next: _Change): Line["content"] => {
   };
 
   for (let i = 0; i < segments.length; i++) {
-    if (segments[i]?.type === "delete" && segments[i + 1]?.type === "insert") {
-      const eq = roughlyEqual(segments[i]!.value, segments[i + 1]!.value);
+    const current = segments[i];
+    const next = segments[i + 1];
+    if (current.type === "delete" && next?.type === "insert") {
+      const charDiff = diffCharsIfWithinEditLimit(current.value, next.value);
 
-      if (eq.equal) {
-        eq.diffs.forEach(mergeIntoResult);
+      if (!charDiff.exceededLimit) {
+        charDiff.diffs.forEach(mergeIntoResult);
 
         i++;
       } else {
-        result.push(segments[i]!);
+        result.push(current);
       }
     } else {
-      mergeIntoResult(segments[i]!);
+      mergeIntoResult(current);
     }
   }
 
@@ -152,179 +155,226 @@ const mergeAdjacentLines = (
   changes: _Change[],
   options: ParseOptions
 ): Line[] => {
-  const n = changes.length;
   const out: Line[] = [];
-  for (let i = 0; i < n; i++) {
-    const c = changes[i];
-    if (!c) continue;
+  for (let i = 0; i < changes.length; i++) {
+    const current = changes[i];
+    const next = changes[i + 1];
     if (
-      c.type === "delete" &&
-      changes[i + 1]?.type === "insert" &&
-      isSimilar(c.content, changes[i + 1]!.content, options.similarityThreshold)
+      next &&
+      current.type === "delete" &&
+      next.type === "insert" &&
+      isTextSimilarEnough(
+        current.content,
+        next.content,
+        options.similarityThreshold
+      )
     ) {
       out.push({
-        ...c,
+        ...current,
         type: "normal",
         isNormal: true,
-        oldLineNumber: (c as DeleteChange).lineNumber,
-        newLineNumber: (changes[i + 1] as InsertChange).lineNumber,
-        content: modifiedContent(c, changes[i + 1]!),
+        oldLineNumber: current.lineNumber,
+        newLineNumber: next.lineNumber,
+        content: buildInlineDiffSegments(current, next),
       });
       i++;
     } else {
-      out.push(changeToLine(c));
+      out.push(changeToLine(current));
     }
   }
 
   return out;
 };
 
-const mergeModifiedLines = (
+const UNPAIRED = -1;
+
+function buildChangeIndices(changes: _Change[]) {
+  const insertIdxs: number[] = [];
+  const deleteIdxs: number[] = [];
+
+  for (let i = 0; i < changes.length; i++) {
+    const c = changes[i];
+    if (c.type === "insert") insertIdxs.push(i);
+    else if (c.type === "delete") deleteIdxs.push(i);
+  }
+  return { insertIdxs, deleteIdxs };
+}
+
+// TODO: slight penalty for distance?
+// TODO: improve performance w binary search?
+function findBestInsertForDelete(
   changes: _Change[],
+  delIdx: number,
+  insertIdxs: number[],
   options: ParseOptions
-): Line[] => {
-  const n = changes.length;
+): number {
+  const del = changes[delIdx] as DeleteChange;
 
-  // Build index lists for valid inserts/deletes
-  const addIdxs: number[] = [];
-  const delIdxs: number[] = [];
-  changes.forEach((c, i) => {
-    if (!c) return;
-    if (c.type === "insert") addIdxs.push(i);
-    else if (c.type === "delete") delIdxs.push(i);
-  });
+  const lower = del.lineNumber - options.maxDiffDistance;
+  const upper = del.lineNumber + options.maxDiffDistance;
 
-  // Helper to calculate line distance between changes
-  const getLineDistance = (del: DeleteChange, add: InsertChange): number => {
-    const minLine = Math.min(del.lineNumber, add.lineNumber);
-    const maxLine = Math.max(del.lineNumber, add.lineNumber);
+  let bestAddIdx = UNPAIRED;
+  let bestRatio = Infinity;
 
-    return Math.abs(maxLine - minLine);
-  };
-
-  // Track pairings: -1 means unpaired
-  const pairOfDel = new Int32Array(n).fill(-1);
-  const pairOfAdd = new Int32Array(n).fill(-1);
-  const pairedAdd = new Set<number>();
-  const pairedDelSnapshot = new Set<number>();
-
-  // Find best matching insert for each delete
-  delIdxs.forEach((di) => {
-    const del = changes[di] as DeleteChange;
-
-    const bestMatch: { idx: number; ratio: number } = addIdxs.reduce(
-      (best, ai) => {
-        const add = changes[ai] as InsertChange;
-
-        if (getLineDistance(del, add) > options.maxDiffDistance) return best;
-
-        if (!isSimilar(del.content, add.content, options.similarityThreshold))
-          return best;
-
-        const ratio = changeRatio(del.content, add.content);
-        return ratio < best.ratio ? { idx: ai, ratio } : best;
-      },
-      { idx: -1, ratio: Infinity }
-    );
-
-    if (bestMatch.idx !== -1) {
-      pairOfDel[di] = bestMatch.idx;
-      pairOfAdd[bestMatch.idx] = di;
-      pairedAdd.add(bestMatch.idx);
-      pairedDelSnapshot.add(di);
-    }
-  });
-
-  // Build prefix sum for unpaired delete detection
-  const unpairedDelPrefix = new Int32Array(n + 1);
-  changes.forEach((c, i) => {
-    const isUnpairedDelete = c.type === "delete" && !pairedDelSnapshot.has(i);
-    unpairedDelPrefix[i + 1] =
-      unpairedDelPrefix[i] + (isUnpairedDelete ? 1 : 0);
-  });
-
-  const hasUnpairedDeleteBetween = (start: number, end: number) =>
-    unpairedDelPrefix[end] - unpairedDelPrefix[Math.max(0, start)] > 0;
-
-  // Process changes and build output
-  const processed = new Set<number>();
-  const out: Line[] = [];
-
-  const emitNormal = (c: _Change) => {
-    out.push(changeToLine(c));
-  };
-
-  const emitModified = (delIdx: number, addIdx: number) => {
-    const del = changes[delIdx] as DeleteChange;
+  for (const addIdx of insertIdxs) {
     const add = changes[addIdx] as InsertChange;
-    out.push({
-      oldLineNumber: del.lineNumber,
-      newLineNumber: add.lineNumber,
-      type: "normal",
-      isNormal: true,
-      content: modifiedContent(del, add),
-    });
-    processed.add(delIdx).add(addIdx);
-  };
 
-  // Main processing loop
-  changes.forEach((c, i) => {
-    if (!c || processed.has(i)) return;
+    if (add.lineNumber < lower) continue;
+    if (add.lineNumber > upper) break;
+
+    const ratio = changeRatio(del.content, add.content);
+
+    if (!isWithinSimilarityThreshold(ratio, options.similarityThreshold))
+      continue;
+
+    if (ratio < bestRatio) {
+      bestRatio = ratio;
+      bestAddIdx = addIdx;
+    }
+  }
+
+  return bestAddIdx;
+}
+
+function buildInitialPairs(
+  changes: _Change[],
+  insertIdxs: number[],
+  deleteIdxs: number[],
+  options: ParseOptions
+) {
+  const n = changes.length;
+  const pairOfDel = new Int32Array(n).fill(UNPAIRED);
+  const pairOfAdd = new Int32Array(n).fill(UNPAIRED);
+
+  for (const di of deleteIdxs) {
+    const bestAddIdx = findBestInsertForDelete(
+      changes,
+      di,
+      insertIdxs,
+      options
+    );
+    if (bestAddIdx !== UNPAIRED) {
+      pairOfDel[di] = bestAddIdx;
+      pairOfAdd[bestAddIdx] = di;
+    }
+  }
+
+  return { pairOfDel, pairOfAdd };
+}
+
+function buildUnpairedDeletePrefix(changes: _Change[], pairOfDel: Int32Array) {
+  const n = changes.length;
+  const prefix = new Int32Array(n + 1);
+
+  for (let i = 0; i < n; i++) {
+    const c = changes[i];
+    const isInitiallyUnpairedDelete =
+      c.type === "delete" && pairOfDel[i] === UNPAIRED;
+    prefix[i + 1] = prefix[i] + (isInitiallyUnpairedDelete ? 1 : 0);
+  }
+
+  return prefix;
+}
+
+function hasUnpairedDeleteBetween(
+  unpairedDelPrefix: Int32Array,
+  deleteIdx: number,
+  insertIdx: number
+) {
+  const lower = Math.max(0, deleteIdx);
+  const upper = Math.max(lower, insertIdx);
+  return unpairedDelPrefix[upper] - unpairedDelPrefix[lower] > 0;
+}
+
+function emitNormal(out: Line[], c: _Change) {
+  out.push(changeToLine(c));
+}
+
+function emitModified(out: Line[], del: DeleteChange, add: InsertChange) {
+  out.push({
+    oldLineNumber: del.lineNumber,
+    newLineNumber: add.lineNumber,
+    type: "normal",
+    isNormal: true,
+    content: buildInlineDiffSegments(del, add),
+  });
+}
+
+function emitLines(
+  changes: _Change[],
+  pairOfDel: Int32Array,
+  pairOfAdd: Int32Array,
+  unpairedDelPrefix: Int32Array
+): Line[] {
+  const out: Line[] = [];
+  const processed = new Uint8Array(changes.length);
+
+  for (let i = 0; i < changes.length; i++) {
+    if (processed[i]) continue;
+    const c = changes[i];
 
     if (c.type === "normal") {
-      processed.add(i);
-      emitNormal(c);
-      return;
-    }
-
-    if (c.type === "delete") {
+      processed[i] = 1;
+      emitNormal(out, c);
+    } else if (c.type === "delete") {
       const pairedAddIdx = pairOfDel[i];
 
-      if (pairedAddIdx === -1) {
-        // No pair - emit as delete
-        processed.add(i);
-        emitNormal(c);
-        return;
-      }
-
-      if (pairedAddIdx > i) {
-        const shouldUnpair = hasUnpairedDeleteBetween(i + 1, pairedAddIdx);
+      if (pairedAddIdx === UNPAIRED) {
+        processed[i] = 1;
+        emitNormal(out, c);
+      } else if (pairedAddIdx > i) {
+        const shouldUnpair = hasUnpairedDeleteBetween(
+          unpairedDelPrefix,
+          i + 1,
+          pairedAddIdx
+        );
 
         if (shouldUnpair) {
-          // Unpair and emit as delete
-          pairedAdd.delete(pairedAddIdx);
-          pairOfAdd[pairedAddIdx] = -1;
-          pairOfDel[i] = -1;
-          processed.add(i);
-          emitNormal(c);
+          pairOfAdd[pairedAddIdx] = UNPAIRED;
+          processed[i] = 1;
+          emitNormal(out, c);
         } else {
-          // Defer - will be handled when we reach the insert
-          processed.add(i);
+          // Defer emission to paired insert
+          processed[i] = 1;
         }
       } else {
-        // Paired insert already seen - emit modified
-        emitModified(i, pairedAddIdx);
+        throw new Error("Paired insert already seen (pairedAddIdx < i)");
       }
-      return;
-    }
+    } else {
+      const pairedDelIdx = pairOfAdd[i];
 
-    if (c.type === "insert") {
-      if (!pairedAdd.has(i)) {
-        // Unpaired insert
-        processed.add(i);
-        emitNormal(c);
+      if (pairedDelIdx === UNPAIRED) {
+        processed[i] = 1;
+        emitNormal(out, c);
       } else {
-        // Paired - emit modified if not already done
-        const pairedDelIdx = pairOfAdd[i];
-        if (pairedDelIdx !== -1 && !processed.has(i)) {
-          emitModified(pairedDelIdx, i);
-        }
+        const del = changes[pairedDelIdx] as DeleteChange;
+        emitModified(out, del, c);
+        processed[i] = 1;
+        processed[pairedDelIdx] = 1;
       }
     }
-  });
+  }
 
   return out;
-};
+}
+
+export function mergeModifiedLines(
+  changes: _Change[],
+  options: ParseOptions
+): Line[] {
+  const { insertIdxs, deleteIdxs } = buildChangeIndices(changes);
+
+  const { pairOfDel, pairOfAdd } = buildInitialPairs(
+    changes,
+    insertIdxs,
+    deleteIdxs,
+    options
+  );
+
+  const unpairedDelPrefix = buildUnpairedDeletePrefix(changes, pairOfDel);
+
+  return emitLines(changes, pairOfDel, pairOfAdd, unpairedDelPrefix);
+}
 
 const parseHunk = (hunk: _Hunk, options: ParseOptions): Hunk => {
   if (options.mergeModifiedLines) {
@@ -345,19 +395,24 @@ const parseHunk = (hunk: _Hunk, options: ParseOptions): Hunk => {
   };
 };
 
+const HUNK_HEADER_REGEX = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)/;
+
+const extractHunkContext = (header: string): string =>
+  HUNK_HEADER_REGEX.exec(header)?.[5]?.trim() ?? "";
+
 const insertSkipBlocks = (hunks: Hunk[]): (Hunk | SkipBlock)[] => {
   const result: (Hunk | SkipBlock)[] = [];
-  let skipId = 0;
   let lastHunkLine = 1;
 
   for (const hunk of hunks) {
     const distanceToLastHunk = hunk.oldStart - lastHunkLine;
 
+    const context = extractHunkContext(hunk.content);
     if (distanceToLastHunk > 0) {
       result.push({
-        id: skipId++,
         count: distanceToLastHunk,
         type: "skip",
+        content: context ?? hunk.content,
       });
     }
     lastHunkLine = Math.max(hunk.oldStart + hunk.oldLines, lastHunkLine);

@@ -23,7 +23,7 @@ export function DiffViewer({
     <CollapsibleCard
       data-section-id="diff-viewer"
       id="diff-viewer"
-      className="my-2 text-[0.8rem] w-full"
+      className="my-4 text-[0.8rem] w-full"
       title="File Changes"
       defaultOpen
     >
@@ -35,18 +35,11 @@ export function DiffViewer({
         <Badge variant="outline">
           {file.type === "rename" ? "Renamed" : "Modified"}
         </Badge>
-        {/* <span className="text-xs tabular-nums whitespace-nowrap">
-          <span className="text-green-600">+{additions}</span>{" "}
-          <span className="text-orange-600">-{deletions}</span>
-        </span> */}
       </CollapsibleCardHeader>
       <CollapsibleCardContent>
         <Diff fileName="file-changes.tsx" hunks={file.hunks} type={file.type}>
           {file.hunks.map((hunk) => (
-            <Hunk
-              key={hunk.type === "hunk" ? hunk.content : hunk.id}
-              hunk={hunk}
-            />
+            <Hunk key={hunk.content} hunk={hunk} />
           ))}
         </Diff>
       </CollapsibleCardContent>

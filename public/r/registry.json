@@ -1,7 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
-  "name": "fredrika ui",
-  "homepage": "https://ui.fredrika.dev",
+  "name": "acme",
+  "homepage": "https://acme.com",
   "items": [
     {
       "name": "diff-viewer",
@@ -29,11 +29,6 @@
           "path": "registry/ui/diff/utils/parse.ts",
           "type": "registry:lib",
           "target": "components/ui/diff/utils/parse.ts"
-        },
-        {
-          "path": "registry/ui/diff/utils/parse-headers.ts",
-          "type": "registry:lib",
-          "target": "components/ui/diff/utils/parse-headers.ts"
         },
         {
           "path": "registry/ui/diff/utils/guess-lang.ts",

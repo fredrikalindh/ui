@@ -1,11 +1,8 @@
 "use client";
 
 import React from "react";
-
 import { refractor } from "refractor/all";
-
 import "./theme.css";
-
 import { ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -15,6 +12,24 @@ import {
   File,
   Line as LineType,
 } from "./utils";
+
+/* -------------------------------------------------------------------------- */
+/*                                — Context —                                 */
+/* -------------------------------------------------------------------------- */
+
+interface DiffContextValue {
+  language: string;
+}
+
+const DiffContext = React.createContext<DiffContextValue | null>(null);
+
+function useDiffContext() {
+  const context = React.useContext(DiffContext);
+  if (!context) {
+    throw new Error("useDiffContext must be used within a Diff component");
+  }
+  return context;
+}
 
 /* -------------------------------------------------------------------------- */
 /*                                — Helpers —                                 */
@@ -61,89 +76,71 @@ export interface DiffProps
   language?: string;
 }
 
-const defaultVars: React.CSSProperties = {
-  "--code-added": "var(--color-green-500)",
-  "--code-removed": "var(--color-orange-600)",
-} as React.CSSProperties;
-
-const Hunk = ({ hunk }: { hunk: HunkType | SkipBlock }) => {
+export const Hunk = ({ hunk }: { hunk: HunkType | SkipBlock }) => {
   return hunk.type === "hunk" ? (
     <>
       {hunk.lines.map((line, index) => (
-        <Line key={index} line={line} language="tsx" />
+        <Line key={index} line={line} />
       ))}
     </>
   ) : (
-    <CollapsedIndicator lines={hunk.count} functionName={hunk.context} />
+    <SkipBlockRow lines={hunk.count} content={hunk.content} />
   );
 };
 
-const Diff: React.FC<DiffProps> = ({
+export const Diff: React.FC<DiffProps> = ({
   fileName,
-  language: langProp,
-  style,
+  language = guessLang(fileName),
   hunks,
   className,
   children,
   ...props
 }) => {
-  // TODO: -> context
-  const language = langProp ?? guessLang(fileName);
-
   return (
-    <table
-      {...props}
-      style={{ ...defaultVars, ...style }}
-      className={cn(
-        "font-mono text-[0.8rem] w-full m-0 border-separate border-0 outline-none overflow-x-auto border-spacing-0",
-        className
-      )}
-    >
-      <tbody className="w-full box-border">
-        {children ??
-          hunks.map((hunk, index) => <Hunk key={index} hunk={hunk} />)}
-      </tbody>
-    </table>
+    <DiffContext.Provider value={{ language }}>
+      <table
+        {...props}
+        className={cn(
+          "[--code-added:var(--color-green-500)] [--code-removed:var(--color-orange-600)] font-mono text-[0.8rem] w-full m-0 border-separate border-0 outline-none overflow-x-auto border-spacing-0",
+          className
+        )}
+      >
+        <tbody className="w-full box-border">
+          {children ??
+            hunks.map((hunk, index) => <Hunk key={index} hunk={hunk} />)}
+        </tbody>
+      </table>
+    </DiffContext.Provider>
   );
 };
 
-const CollapsedIndicator: React.FC<{
+const SkipBlockRow: React.FC<{
   lines: number;
-  functionName?: string;
-}> = ({ lines, functionName }) => (
+  content?: string;
+}> = ({ lines, content }) => (
   <>
-    <tr className="h-4">
-      <td colSpan={100}></td>
-    </tr>
-    <tr
-      className={cn(
-        "h-10 items-center font-mono",
-        "select-none bg-muted text-muted-foreground"
-      )}
-    >
-      <td></td>
-      <td className="tabular-nums opacity-50 px-2 select-none">
+    <tr className="h-4" />
+    <tr className={cn("h-10 font-mono bg-muted text-muted-foreground")}>
+      <td />
+      <td className="opacity-50 select-none">
         <ChevronsUpDown className="size-4 mx-auto" />
       </td>
       <td>
         <span className="px-0 sticky left-2 italic opacity-50">
-          {functionName ? `${functionName}` : `${lines} lines hidden`}
+          {content || `${lines} lines hidden`}
         </span>
       </td>
     </tr>
-    <tr className="h-4">
-      <td colSpan={100}></td>
-    </tr>
+    <tr className="h-4" />
   </>
 );
 
 const Line: React.FC<{
   line: LineType;
-  language: string;
-}> = ({ line, language }) => {
+}> = ({ line }) => {
+  const { language } = useDiffContext();
   const Tag =
     line.type === "insert" ? "ins" : line.type === "delete" ? "del" : "span";
-
   const lineNumberNew =
     line.type === "normal" ? line.newLineNumber : line.lineNumber;
   const lineNumberOld = line.type === "normal" ? line.oldLineNumber : undefined;
@@ -153,19 +150,15 @@ const Line: React.FC<{
       data-line-new={lineNumberNew ?? undefined}
       data-line-old={lineNumberOld ?? undefined}
       data-line-kind={line.type}
-      className={cn("whitespace-pre-wrap box-border border-none", {
-        "bg-[var(--code-added)]/10 border-l-3 box-border":
-          line.type === "insert",
-        "bg-[var(--code-removed)]/10 border-l-3 box-border":
-          line.type === "delete",
+      className={cn("whitespace-pre-wrap box-border border-none h-5 min-h-5", {
+        "bg-[var(--code-added)]/10": line.type === "insert",
+        "bg-[var(--code-removed)]/10": line.type === "delete",
       })}
     >
       <td
-        className={cn("border-l-3 border-transparent w-1", {
-          "border-l-3 box-border border-[color:var(--code-added)]/60":
-            line.type === "insert",
-          "border-l-3 box-border border-[color:var(--code-removed)]/80":
-            line.type === "delete",
+        className={cn("border-transparent w-1 border-l-3", {
+          "border-[color:var(--code-added)]/60": line.type === "insert",
+          "border-[color:var(--code-removed)]/80": line.type === "delete",
         })}
       />
       <td className="tabular-nums text-center opacity-50 px-2 text-xs select-none">
@@ -177,10 +170,8 @@ const Line: React.FC<{
             <span
               key={i}
               className={cn({
-                "bg-[color:var(--code-added)]/20":
-                  seg.type === "insert" && line.type === "normal",
-                "bg-[color:var(--code-removed)]/20":
-                  seg.type === "delete" && line.type === "normal",
+                "bg-[var(--code-added)]/20": seg.type === "insert",
+                "bg-[var(--code-removed)]/20": seg.type === "delete",
               })}
             >
               {highlight(seg.value, language).map((n, idx) => (
@@ -193,5 +184,3 @@ const Line: React.FC<{
     </tr>
   );
 };
-
-export { Diff, Hunk };

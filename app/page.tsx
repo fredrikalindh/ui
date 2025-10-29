@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { DiffViewer } from "@/registry/blocks/diff-viewer/diff-viewer";
+import { EXAMPLE_DIFF } from "@/registry/blocks/diff-viewer/data";
 
 export default function Home() {
   return (
@@ -12,7 +13,7 @@ export default function Home() {
         </p>
       </header>
       <main className="flex flex-col flex-1 gap-8">
-        <DiffViewer />
+        <DiffViewer patch={EXAMPLE_DIFF} />
       </main>
     </div>
   );
