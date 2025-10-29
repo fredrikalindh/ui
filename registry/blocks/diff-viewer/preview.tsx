@@ -5,6 +5,7 @@ import * as React from "react";
 import { DiffViewer } from "@/registry/blocks/diff-viewer/diff-viewer";
 import type { ParseOptions } from "@/registry/ui/diff/utils/parse";
 import { Label } from "@/registry/ui/label";
+import { Slider } from "@/components/ui/slider";
 
 type PreviewProps = {
   patch: string;
@@ -69,19 +70,17 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-4">
           <Label htmlFor="similarityThreshold">
             Similarity threshold ({similarityThreshold.toFixed(2)})
           </Label>
-          <input
+          <Slider
             id="similarityThreshold"
-            type="range"
             min={0}
             max={1}
             step={0.01}
-            value={similarityThreshold}
-            onChange={(e) => setSimilarityThreshold(Number(e.target.value))}
-            className="w-full cursor-pointer"
+            value={[similarityThreshold]}
+            onValueChange={(value) => setSimilarityThreshold(value[0])}
             disabled={!mergeModifiedLines}
           />
           <p className="text-xs text-muted-foreground">
@@ -89,19 +88,17 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
           </p>
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-4">
           <Label htmlFor="maxDiffDistance">
             Max diff distance ({maxDiffDistance})
           </Label>
-          <input
+          <Slider
             id="maxDiffDistance"
-            type="range"
             min={1}
             max={60}
             step={1}
-            value={maxDiffDistance}
-            onChange={(e) => setMaxDiffDistance(Number(e.target.value))}
-            className="w-full cursor-pointer"
+            value={[maxDiffDistance]}
+            onValueChange={(value) => setMaxDiffDistance(value[0])}
             disabled={!mergeModifiedLines}
           />
           <p className="text-xs text-muted-foreground">
@@ -109,19 +106,17 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
           </p>
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-4">
           <Label htmlFor="inlineMaxCharEdits">
             Inline max char edits ({inlineMaxCharEdits})
           </Label>
-          <input
+          <Slider
             id="inlineMaxCharEdits"
-            type="range"
             min={0}
             max={10}
             step={1}
-            value={inlineMaxCharEdits}
-            onChange={(e) => setInlineMaxCharEdits(Number(e.target.value))}
-            className="w-full cursor-pointer"
+            value={[inlineMaxCharEdits]}
+            onValueChange={(value) => setInlineMaxCharEdits(value[0])}
             disabled={!mergeModifiedLines}
           />
           <p className="text-xs text-muted-foreground">
