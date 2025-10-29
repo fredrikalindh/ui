@@ -50,7 +50,6 @@ const CollapsibleCardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   </Collapsible.Trigger>
 );
 
-// TODO: remove copy button from component, move to docs example
 const CollapsibleCardTitle: React.FC<
   React.HTMLAttributes<HTMLSpanElement> & { title?: string }
 > = ({ className, title, children, ...p }) => {

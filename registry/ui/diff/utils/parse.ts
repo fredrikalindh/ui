@@ -338,7 +338,10 @@ function emitLines(
           processed[i] = 1;
         }
       } else {
-        throw new Error("Paired insert already seen (pairedAddIdx < i)");
+        const add = changes[pairedAddIdx] as InsertChange;
+        emitModified(out, c, add);
+        processed[i] = 1;
+        processed[pairedAddIdx] = 1;
       }
     } else {
       const pairedDelIdx = pairOfAdd[i];

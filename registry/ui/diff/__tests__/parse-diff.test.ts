@@ -10,9 +10,9 @@ index 4def792..b63576c 100644
 +++ b/file.tsx
 `;
 
-describe("parseDiff concise plan", () => {
-  describe("basic diff behavior", () => {
-    test("returns added lines when new content appears", () => {
+describe("parseDiff: core behavior", () => {
+  describe("line-level behavior", () => {
+    test("marks new lines as 'insert' when content is added", () => {
       const diff = `${HEADER}@@ -1,2 +1,3 @@
  line 1
 +line 2
@@ -28,7 +28,7 @@ describe("parseDiff concise plan", () => {
       expect(chunk!.lines[1]?.content[0]?.value).toBe("line 2");
     });
 
-    test("returns removed lines when content disappears", () => {
+    test("marks removed lines as 'delete' when content is removed", () => {
       const diff = `${HEADER}@@ -1,3 +1,2 @@
  line 1
 -line 2
@@ -44,7 +44,7 @@ describe("parseDiff concise plan", () => {
       expect(chunk!.lines[1]?.content[0]?.value).toBe("line 2");
     });
 
-    test("preserves normal lines in diff output", () => {
+    test("preserves 'normal' type for unchanged lines", () => {
       const diff = `${HEADER}@@ -1,2 +1,2 @@
  line 1
  line 2`;
@@ -55,11 +55,11 @@ describe("parseDiff concise plan", () => {
       expect(chunk!.lines.every((l) => l.type === "normal")).toBe(true);
     });
 
-    test("handles empty diff gracefully", () => {
+    test("returns empty array for empty diff input", () => {
       expect(parseDiff("")).toEqual([]);
     });
 
-    test("keeps empty lines intact", () => {
+    test("preserves empty lines as explicit delete/insert entries", () => {
       const diff = `${HEADER}@@ -1,3 +1,3 @@
  line 1
 -
@@ -72,7 +72,7 @@ describe("parseDiff concise plan", () => {
       expect(chunk!.lines[2]?.type).toBe("insert");
     });
 
-    test("groups multiple consecutive additions", () => {
+    test("emits consecutive 'insert' entries for multiple additions", () => {
       const diff = `${HEADER}@@ -1,1 +1,4 @@
  line 1
 +line 2
@@ -89,7 +89,7 @@ describe("parseDiff concise plan", () => {
       ]);
     });
 
-    test("groups multiple consecutive deletions", () => {
+    test("emits consecutive 'delete' entries for multiple deletions", () => {
       const diff = `${HEADER}@@ -1,4 +1,1 @@
  line 1
 -line 2
@@ -106,7 +106,7 @@ describe("parseDiff concise plan", () => {
       ]);
     });
 
-    test("treats adding newline at EOF as normal", () => {
+    test("treats newline-at-EOF change as normal; no extra add/remove of closing brace", () => {
       // This is the actual scenario from packages/api/tsconfig.json
       const diff = `${HEADER}@@ -11,6 +11,6 @@
        "@workspace/github": ["../github/src"]
@@ -121,8 +121,6 @@ describe("parseDiff concise plan", () => {
 
       const chunk = lineBlocks(diff)[0];
       expect(chunk).toBeDefined();
-
-      console.log(JSON.stringify(chunk, null, 2));
 
       // The last line should be the final closing brace
       const lastLine = chunk!.lines[chunk!.lines.length - 1];
@@ -155,8 +153,8 @@ describe("parseDiff concise plan", () => {
     });
   });
 
-  describe("word-level pairing heuristics", () => {
-    test("generates word-level diff for similar lines", () => {
+  describe("word- and character-level pairing heuristics", () => {
+    test("merges similar add/delete into single 'normal' line with word-level segments", () => {
       const diff = `${HEADER}@@ -1,1 +1,1 @@
 -import { useState, useRef, useEffect } from 'react';
 +import { useRef } from 'react';`;
@@ -179,7 +177,7 @@ describe("parseDiff concise plan", () => {
         segments.some((s) => s.type === "normal" && s.value.includes("import"))
       ).toBe(true);
     });
-    test("generates word-level diff despite addition coming before deletion", () => {
+    test("pairs lines for word-level diff even when addition precedes deletion", () => {
       const diff = `${HEADER}@@ -1,1 +1,1 @@
 +import { useRef } from 'react';
 -import { useState, useRef, useEffect } from 'react';
@@ -204,7 +202,7 @@ describe("parseDiff concise plan", () => {
       ).toBe(true);
     });
 
-    test("pairs similar consecutive edits", () => {
+    test("pairs consecutive similar edits into modified 'normal' lines", () => {
       const diff = `${HEADER}@@ -1,2 +1,3 @@
 -const foo = 'bar';
 -const baz = 'qux';
@@ -224,7 +222,7 @@ describe("parseDiff concise plan", () => {
       ]);
     });
 
-    test("rejects pairing for dissimilar changes", () => {
+    test("does not pair dissimilar changes; emits separate delete and insert", () => {
       const diff = `${HEADER}@@ -1,1 +1,1 @@
 -this is completely different text
 +something totally unrelated here`;
@@ -234,7 +232,7 @@ describe("parseDiff concise plan", () => {
       expect(chunk!.lines.map((l) => l.type)).toEqual(["delete", "insert"]);
     });
 
-    test("respects similarity threshold around fifty percent", () => {
+    test("applies ~50% similarity threshold to include both delete and insert segments", () => {
       const diff = `${HEADER}@@ -1,1 +1,1 @@
 -const value = calculateSomething();
 +const result = calculateSomething();`;
@@ -251,7 +249,7 @@ describe("parseDiff concise plan", () => {
       expect(chunk!.lines[0]?.type).toBe("normal");
     });
 
-    test("rejects very low similarity matches", () => {
+    test("rejects very low-similarity changes; emits separate delete and insert lines", () => {
       const diff = `${HEADER}@@ -1,1 +1,1 @@
 -short
 +this is a much longer line with completely different content`;
@@ -261,7 +259,7 @@ describe("parseDiff concise plan", () => {
       expect(chunk!.lines.map((l) => l.type)).toEqual(["delete", "insert"]);
     });
 
-    test("prefers best pairings when multiple candidates exist", () => {
+    test("prefers optimal pairing when multiple candidates exist", () => {
       const diff = `${HEADER}@@ -1,6 +1,6 @@
 +const value = calculateValue();
 +const result = processResult();
@@ -304,7 +302,7 @@ describe("parseDiff concise plan", () => {
   });
 
   describe("chunking and skip blocks", () => {
-    test("creates skip block before the first distant chunk", () => {
+    test("emits leading skip block for first distant hunk", () => {
       const diff = `${HEADER}@@ -10,3 +10,3 @@
  line 9 context
 -line 10 old
@@ -319,7 +317,7 @@ describe("parseDiff concise plan", () => {
       expect(items[1]).toMatchObject({ type: "hunk" });
     });
 
-    test("creates skip blocks between separated chunks", () => {
+    test("inserts skip block between distant hunks", () => {
       const diff = `${HEADER}@@ -1,3 +1,3 @@
  line 1
 -line 2 old
@@ -344,7 +342,7 @@ describe("parseDiff concise plan", () => {
     });
   });
 
-  it("should handle the Card.Root refactoring correctly", () => {
+  it("keeps JSX refactor as separate removal plus insertions (no pairing)", () => {
     const diff = `${HEADER}
 @@ -1,1 +1,5 @@
 -<Card.Root data-section-id={id} id={id}>
@@ -369,7 +367,7 @@ describe("parseDiff concise plan", () => {
     expect(allLines[1]?.type).toBe("normal");
   });
 
-  it("should display simple className change as modified line", () => {
+  it("represents className change as a single modified line with inline segment", () => {
     const diff = `${HEADER}
 @@ -257,7 +257,7 @@ export const FileChanges = ({ prMeta, files, prId }: FileChangesProps) => {
          )}
@@ -405,7 +403,7 @@ describe("parseDiff concise plan", () => {
     expect(hasRemovedSegment).toBe(true);
   });
 
-  it("should display removed lines before added lines (no reordering)", () => {
+  it("preserves line order: deletions appear before insertions", () => {
     const diff = `diff --git a/file-changes.tsx b/file-changes.tsx
 index 1234567..2345678 100644
 --- a/file-changes.tsx
@@ -468,7 +466,7 @@ index 1234567..2345678 100644
     ).toBe(true);
   });
 
-  it("should handle simple JSX reformatting", () => {
+  it("pairs JSX tag split into a single modified line", () => {
     const diff = `${HEADER}
 @@ -1,1 +1,3 @@
 -<Component prop="value" />
@@ -487,7 +485,7 @@ index 1234567..2345678 100644
     expect(modified.length).toBe(1);
   });
 
-  it("should handle simple JSX reformatting", () => {
+  it("pairs JSX tag split when additions precede deletion", () => {
     const diff = `${HEADER}
 @@ -1,1 +1,3 @@
 +<Component
@@ -510,7 +508,7 @@ index 1234567..2345678 100644
     ]);
   });
 
-  it("should pair similar function signatures even when separated", () => {
+  it("does not pair similar function signatures when separated by context", () => {
     const diff = `${HEADER}
 @@ -1,10 +1,15 @@
 +const Header: React.FC<Props> = ({
@@ -542,7 +540,7 @@ const Root = () => {
     expect(addedLines.length).toBeGreaterThan(0);
   });
 
-  it("should handle React component prop addition with modified destructuring", () => {
+  it("handles prop addition plus modified destructuring with inline highlights", () => {
     const diff = `${HEADER}
 @@ -119,10 +125,32 @@ const Line: React.FC<{
    line: DiffLine;
@@ -589,7 +587,7 @@ const Root = () => {
       )
     ).toBe(true);
   });
-  it("should character diffs nicely", () => {
+  it("performs character-level diff for single-character insertion", () => {
     const diff = `${HEADER}
 @@ -1,1 +1,1 @@ const Line: React.FC<{
 -Setup a new challeng each day
@@ -616,7 +614,7 @@ const Root = () => {
       "normal",
     ]);
   });
-  it("should character diffs nicely in beginning of word", () => {
+  it("performs character-level diff at start of word (case change)", () => {
     const diff = `${HEADER}
 @@ -1,1 +1,1 @@ const Line: React.FC<{
 -setup a new challenge each day
@@ -640,7 +638,7 @@ const Root = () => {
       "normal",
     ]);
   });
-  it("should character diffs nicely in middle of word", () => {
+  it("performs character-level diff in middle of word (typo fix)", () => {
     const diff = `${HEADER}
 @@ -1,1 +1,1 @@ const Line: React.FC<{
 -Setup a new challennge each day
