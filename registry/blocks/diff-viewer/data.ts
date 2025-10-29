@@ -14,7 +14,7 @@ index fa4d9c4..8d980f1 100644
  
  const Root = ({
    className,
-   children,
++  children,
 +  defaultOpen = true,
    ...props
 -}: React.ComponentProps<"div">) => {
@@ -55,7 +55,7 @@ index fa4d9c4..8d980f1 100644
 +      <Button variant="ghost" size="icon" className="h-8 w-8">
 +        <ChevronDown className="h-4 w-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
 +      </Button>
-       {children}
++      {children}
      </div>
 -  );
 -};

@@ -16,8 +16,8 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
   const [mergeModifiedLines, setMergeModifiedLines] = React.useState(
     initialOptions?.mergeModifiedLines ?? true
   );
-  const [similarityThreshold, setSimilarityThreshold] = React.useState(
-    initialOptions?.similarityThreshold ?? 0.45
+  const [maxChangeRatio, setMaxChangeRatio] = React.useState(
+    initialOptions?.maxChangeRatio ?? 0.45
   );
   const [maxDiffDistance, setMaxDiffDistance] = React.useState(
     initialOptions?.maxDiffDistance ?? 30
@@ -34,10 +34,10 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
       } else {
         setMergeModifiedLines(true);
       }
-      if (typeof initialOptions.similarityThreshold === "number") {
-        setSimilarityThreshold(initialOptions.similarityThreshold);
+      if (typeof initialOptions.maxChangeRatio === "number") {
+        setMaxChangeRatio(initialOptions.maxChangeRatio);
       } else {
-        setSimilarityThreshold(0.45);
+        setMaxChangeRatio(0.45);
       }
       if (typeof initialOptions.maxDiffDistance === "number") {
         setMaxDiffDistance(initialOptions.maxDiffDistance);
@@ -71,16 +71,16 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="flex flex-col gap-4">
-          <Label htmlFor="similarityThreshold">
-            Similarity threshold ({similarityThreshold.toFixed(2)})
+          <Label htmlFor="maxChangeRatio">
+            Max change ratio ({maxChangeRatio.toFixed(2)})
           </Label>
           <Slider
-            id="similarityThreshold"
+            id="maxChangeRatio"
             min={0}
-            max={1}
+            max={0.99}
             step={0.01}
-            value={[similarityThreshold]}
-            onValueChange={(value) => setSimilarityThreshold(value[0])}
+            value={[maxChangeRatio]}
+            onValueChange={(value) => setMaxChangeRatio(value[0])}
             disabled={!mergeModifiedLines}
           />
           <p className="text-xs text-muted-foreground">
@@ -129,7 +129,7 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
         patch={patch}
         options={{
           mergeModifiedLines,
-          similarityThreshold,
+          maxChangeRatio,
           maxDiffDistance,
           inlineMaxCharEdits,
         }}

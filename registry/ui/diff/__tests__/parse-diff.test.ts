@@ -664,4 +664,44 @@ const Root = () => {
       "normal",
     ]);
   });
+
+  it("does not merge dissimilar adjacent imports even with high maxChangeRatio", () => {
+    const diff = `${HEADER}@@ -1,4 +1,4 @@
+-import { Check, Copy } from "lucide-react";
++import { Check, Copy, ChevronDown } from "lucide-react";
+ import { Button } from "@workspace/ui/components/button";
+-import { useTheme } from "next-themes";
++import * as Collapsible from "@radix-ui/react-collapsible";
+`;
+
+    const result = parseDiff(diff, { maxChangeRatio: 0.86 });
+    const allLines = result[0]?.hunks
+      .filter((h) => h.type === "hunk")
+      .flatMap((h) => h.lines);
+
+    expect(allLines).toBeDefined();
+
+    // First line should be a merged modification (lucide-react import with ChevronDown added)
+    expect(allLines![0]?.type).toBe("normal");
+    expect(
+      allLines![0]?.content.some(
+        (s) => s.type === "insert" && s.value.includes("ChevronDown")
+      )
+    ).toBe(true);
+
+    // Second line should be normal (Button import unchanged)
+    expect(allLines![1]?.type).toBe("normal");
+    expect(allLines![1]?.content.every((s) => s.type === "normal")).toBe(true);
+
+    // Third and fourth lines should be separate delete and insert
+    // because useTheme and Collapsible are too dissimilar
+    expect(allLines!.map((l) => l.type)).toEqual([
+      "normal",
+      "normal",
+      "normal",
+    ]);
+
+    // Should have exactly 4 lines total
+    expect(allLines).toHaveLength(3);
+  });
 });

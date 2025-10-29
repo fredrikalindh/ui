@@ -9,7 +9,9 @@ description: An opinionated simple diff viewer for React.
   description="A real git patch rendered with grouping heuristics."
   src="/previews/diff-viewer/overview"
 >
-The unified diff viewer parses standard unified diffs and renders them as minimally as possible. It merges nearby insertions and deletions into a single “modified” row and shows small character-level edits inline to make it easier to understand changes.
+The unified diff viewer parses standard unified diffs and renders them as minimally as possible. It merges nearby insertions and deletions into a single “modified” row and shows small character-level edits inline to make it easier to understand changes.  
+
+Below is documentation for how to use it, and an in-depth explanation of how it works. To the right, you can see the DiffViewer component. During the in-depth explanation you will see how we go from a verbose Github style diff, to a more minimal diff.
 </Preview>
 
 ## Installation
@@ -20,13 +22,13 @@ npx shadcn@latest add https://ui.fredrika.dev/r/diff-viewer.json
 
 ## Usage
 
-Use the `parseDiff` to convert a diff string into a list of files. Passing `children` to the `Diff` is optional, just passing the `hunks` is fine too.
+Use `parseDiff` to convert a diff string into a list of files. Passing `children` to the `Diff` is optional, just passing the `hunks` is fine too.
 
 ```tsx
 import { parseDiff } from "@/ui/diff/utils";
 import { Diff, Hunk, Link } from "@/ui/diff";
 
-const DiffViewer = () => {
+const DiffViewer = ({ diff }: { diff: string }) => {
   const files = parseDiff(diff);
 
   return (
@@ -34,7 +36,7 @@ const DiffViewer = () => {
       {files.map((file) => (
         <Diff key={file.name} hunks={file.hunks}>
           {file.hunks.map((hunk) => (
-            <Hunk key={hunk.id} />
+            <Hunk key={hunk.id} hunk={hunk} />
           ))}
         </Diff>
       ))}
@@ -100,13 +102,13 @@ const mergeAdjacentLines = (changes: _Change[]): Line[] => {
 
 <Preview
   id="dissimilarRaw"
-  label="No similarity threshold"
+  label="No change ratio limit"
   description="Highly dissimilar lines create noise without extra heuristics."
   src="/previews/diff-viewer/dissimilarRaw"
 >
 The problem with just merging *every* delete+insert pair is that when the lines are very different, the result is noisy. See line 6 – not very nice. 
 
-To solve this, we can add a similarity threshold. So only lines where the change ratio is less than the threshold are merged.
+To solve this, we can add a maximum change ratio. So only lines where the change ratio is less than this threshold are merged.
 
 ```ts
 const calculateChangeRatio = (a: string, b: string): number => {
@@ -121,17 +123,17 @@ const calculateChangeRatio = (a: string, b: string): number => {
 
 // Then we check for it before merging
 if (current.type === "delete" && next.type === "insert" 
-  && calculateChangeRatio(current.content, next.content) < options.similarityThreshold) { /* ... */ }
+  && calculateChangeRatio(current.content, next.content) < options.maxChangeRatio) { /* ... */ }
 ```
 </Preview>
 
 <Preview
   id="dissimilar"
-  label="Similarity threshold"
+  label="Max change ratio"
   description="Similar lines are merged even when they are not adjacent."
   src="/previews/diff-viewer/dissimilar"
 >
-Decreasing the similarity threshold to `0.45` prevents the parser from merging line 6.
+Setting the max change ratio to `0.45` prevents the parser from merging line 6. Try playing with it to see what happens.
 
 But the diff doesn't always place deletions and insertions of modified lines next to each other. 
 

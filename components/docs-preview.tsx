@@ -45,13 +45,28 @@ export function DocsPreviewProvider({
   React.useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActivePreviewId(entry.target.id);
-          }
-        }
+        const intersectingEntries = entries.filter(
+          (entry) => entry.isIntersecting
+        );
+
+        if (intersectingEntries.length === 0) return;
+
+        intersectingEntries.sort((a, b) => {
+          return (
+            a.target.getBoundingClientRect().top -
+            b.target.getBoundingClientRect().top
+          );
+        });
+
+        const activeEntry =
+          intersectingEntries.find((entry) => {
+            const rect = entry.target.getBoundingClientRect();
+            return rect.top <= window.innerHeight * 0.4;
+          }) || intersectingEntries[0];
+
+        setActivePreviewId(activeEntry.target.id);
       },
-      { rootMargin: "-20% 0% -50% 0%" }
+      { rootMargin: "-30% 0% -50% 0%", threshold: [0, 0.25, 0.5, 0.75, 1] }
     );
 
     const elements = document.querySelectorAll("[data-docs-preview-section]");

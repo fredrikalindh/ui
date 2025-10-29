@@ -16,22 +16,22 @@ const OPTION_PRESETS: { [key: string]: Partial<ParseOptions> } = {
   merged: { mergeModifiedLines: true, maxDiffDistance: 1 },
   dissimilarRaw: {
     mergeModifiedLines: true,
-    similarityThreshold: 1,
+    maxChangeRatio: 1,
     maxDiffDistance: 1,
   },
   dissimilar: {
     mergeModifiedLines: true,
-    similarityThreshold: 0.45,
+    maxChangeRatio: 0.45,
     maxDiffDistance: 1,
   },
   overview: {
     mergeModifiedLines: true,
-    similarityThreshold: 0.45,
+    maxChangeRatio: 0.45,
     maxDiffDistance: 30,
   },
   complexMerged: {
     mergeModifiedLines: true,
-    similarityThreshold: 0.45,
+    maxChangeRatio: 0.45,
     maxDiffDistance: 30,
     inlineMaxCharEdits: 0,
   },

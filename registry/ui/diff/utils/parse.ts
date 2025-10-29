@@ -35,7 +35,7 @@ export interface File extends Omit<_File, "hunks"> {
 
 export interface ParseOptions {
   maxDiffDistance: number;
-  similarityThreshold: number;
+  maxChangeRatio: number;
   mergeModifiedLines: boolean;
   inlineMaxCharEdits: number;
 }
@@ -53,11 +53,11 @@ const calculateChangeRatio = (a: string, b: string): number => {
 const isSimilarEnough = (
   a: string,
   b: string,
-  similarityThreshold: number
+  maxChangeRatio: number
 ): boolean => {
-  if (similarityThreshold <= 0) return a === b;
-  if (similarityThreshold >= 1) return true;
-  return calculateChangeRatio(a, b) <= similarityThreshold;
+  if (maxChangeRatio <= 0) return a === b;
+  if (maxChangeRatio >= 1) return true;
+  return calculateChangeRatio(a, b) <= maxChangeRatio;
 };
 
 const changeToLine = (change: _Change): Line => ({
@@ -161,11 +161,7 @@ const mergeAdjacentLines = (
       next &&
       current.type === "delete" &&
       next.type === "insert" &&
-      isSimilarEnough(
-        current.content,
-        next.content,
-        options.similarityThreshold
-      )
+      isSimilarEnough(current.content, next.content, options.maxChangeRatio)
     ) {
       out.push({
         ...current,
@@ -204,6 +200,7 @@ function findBestInsertForDelete(
   changes: _Change[],
   delIdx: number,
   insertIdxs: number[],
+  pairOfAdd: Int32Array,
   options: ParseOptions
 ): number {
   const del = changes[delIdx] as DeleteChange;
@@ -217,12 +214,14 @@ function findBestInsertForDelete(
   for (const addIdx of insertIdxs) {
     const add = changes[addIdx] as InsertChange;
 
+    if (pairOfAdd[addIdx] !== UNPAIRED) continue;
+
     if (add.lineNumber < lower) continue;
     if (add.lineNumber > upper) break;
 
     const ratio = calculateChangeRatio(del.content, add.content);
 
-    if (ratio > options.similarityThreshold) continue;
+    if (ratio > options.maxChangeRatio) continue;
 
     if (ratio < bestRatio) {
       bestRatio = ratio;
@@ -248,6 +247,7 @@ function buildInitialPairs(
       changes,
       di,
       insertIdxs,
+      pairOfAdd,
       options
     );
     if (bestAddIdx !== UNPAIRED) {
@@ -430,7 +430,7 @@ const insertSkipBlocks = (hunks: Hunk[]): (Hunk | SkipBlock)[] => {
 
 const defaultOptions: ParseOptions = {
   maxDiffDistance: 30,
-  similarityThreshold: 0.45,
+  maxChangeRatio: 0.45,
   mergeModifiedLines: true,
   inlineMaxCharEdits: 4,
 };
