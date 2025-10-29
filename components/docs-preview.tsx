@@ -66,7 +66,7 @@ export function DocsPreviewProvider({
 
         setActivePreviewId(activeEntry.target.id);
       },
-      { rootMargin: "-30% 0% -50% 0%", threshold: [0, 0.25, 0.5, 0.75, 1] }
+      { rootMargin: "-40% 0% -50% 0%", threshold: [0, 0.25, 0.5, 0.75, 1] }
     );
 
     const elements = document.querySelectorAll("[data-docs-preview-section]");
