@@ -40,9 +40,11 @@ export async function generateMetadata(props: {
       url: `${process.env.NEXT_PUBLIC_APP_URL}${page.url}`,
       images: [
         {
-          url: `/og?title=${encodeURIComponent(
-            doc.title
-          )}&description=${encodeURIComponent(doc.description)}`,
+          url: doc.ogImage
+            ? doc.ogImage
+            : `/og?title=${encodeURIComponent(
+                doc.title
+              )}&description=${encodeURIComponent(doc.description)}`,
         },
       ],
     },
@@ -52,9 +54,11 @@ export async function generateMetadata(props: {
       description: doc.description,
       images: [
         {
-          url: `/og?title=${encodeURIComponent(
-            doc.title
-          )}&description=${encodeURIComponent(doc.description)}`,
+          url: doc.ogImage
+            ? doc.ogImage
+            : `/og?title=${encodeURIComponent(
+                doc.title
+              )}&description=${encodeURIComponent(doc.description)}`,
         },
       ],
       creator: "@fredrikalindh",
@@ -79,9 +83,9 @@ export default async function Page(props: {
     <DiffDocsPreviewProvider>
       <div
         data-slot="docs"
-        className="text-[1.05rem] sm:text-[15px] xl:w-full grid w-full min-w-0 lg:grid-cols-2"
+        className="text-[1.05rem] sm:text-[15px] xl:w-full flex flex-col lg:grid w-full min-w-0 lg:grid-cols-2"
       >
-        <div className="flex flex-col gap-2 px-12 py-32 pb-100">
+        <div className="flex flex-col gap-2 px-4 lg:px-12 py-32 pb-100">
           <h1 className="scroll-m-20 text-6xl font-medium tracking-tight font-serif sm:text-7xl xl:text-8xl">
             {doc.title}
           </h1>

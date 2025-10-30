@@ -54,7 +54,7 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 p-4 lg:p-0 pb-0">
         <Label htmlFor="mergeModifiedLines">Merge modified lines</Label>
         <div className="flex items-center gap-3">
           <input
@@ -69,7 +69,7 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
           </span>
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-3 px-4 lg:px-0">
         <div className="flex flex-col gap-4">
           <Label htmlFor="maxChangeRatio">
             Max change ratio ({maxChangeRatio.toFixed(2)})

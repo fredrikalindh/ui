@@ -1,23 +1,66 @@
-# registry-template
+# UI Registry
 
-You can use the `shadcn` CLI to run your own component registry. Running your own
-component registry allows you to distribute your custom components, hooks, pages, and
-other files to any React project.
+A curated collection of reusable UI components built with React, TypeScript, and Tailwind CSS. Install components directly into your project with the shadcn CLI.
 
-> [!IMPORTANT]  
-> This template uses Tailwind v4. For Tailwind v3, see [registry-template-v3](https://github.com/shadcn-ui/registry-template-v3).
+🌐 **[Visit the docs](https://ui.fredrika.dev/docs)**
 
-## Getting Started
 
-This is a template for creating a custom registry using Next.js.
+## Quick Start
 
-- The template uses a `registry.json` file to define components and their files.
-- The `shadcn build` command is used to build the registry.
-- The registry items are served as static files under `public/r/[name].json`.
-- The template also includes a route handler for serving registry items.
-- Every registry item are compatible with the `shadcn` CLI.
-- We have also added v0 integration using the `Open in v0` api.
+### Install from the Registry
 
-## Documentation
+Add any component to your project using the shadcn CLI:
 
-Visit the [shadcn documentation](https://ui.shadcn.com/docs/registry) to view the full documentation.
+```bash
+npx shadcn@latest add https://ui.fredrika.dev/r/<name>.json
+```
+
+Check [registry.json](registry.json) for the complete list of available components.
+
+
+## Local Development
+
+### Setup
+
+```bash
+pnpm install
+pnpm dev
+```
+
+The site will be available at `http://localhost:3000`.
+
+## Project Structure
+
+```
+.
+├── registry/
+│   ├── ui/          # Source components shipped to consumers
+│   └── blocks/      # Example implementations and demos
+├── content/
+│   └── docs/        # MDX documentation files
+├── components/      # Documentation site UI components
+├── app/             # Next.js App Router pages
+└── public/
+    └── r/           # Generated registry JSON payloads (build artifacts)
+```
+
+## Contributing
+
+### Adding a New Component
+
+1. Create your component in `registry/ui/`
+2. Add an entry to `registry.json` with metadata and dependencies
+4. Add documentation in `content/docs/`
+5. Build the registry to generate JSON payloads
+
+The generated payloads in `public/r/` are automatically included in your deployment, allowing consumers to install components via the shadcn CLI.
+
+## Testing
+
+```bash
+# Run tests
+pnpm test
+
+# Run tests in watch mode
+pnpm test:watch
+```
