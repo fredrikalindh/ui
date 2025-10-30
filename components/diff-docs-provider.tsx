@@ -12,17 +12,29 @@ import { EXAMPLE_DIFF } from "@/registry/blocks/diff-viewer/data";
 import { ParseOptions } from "@/registry/ui/diff/utils";
 
 const OPTION_PRESETS: { [key: string]: Partial<ParseOptions> } = {
-  github: { mergeModifiedLines: false } as const,
-  merged: { mergeModifiedLines: true, maxDiffDistance: 1 },
+  github: {
+    mergeModifiedLines: false,
+    maxChangeRatio: 0.45,
+    maxDiffDistance: 1,
+    inlineMaxCharEdits: 0,
+  },
+  merged: {
+    mergeModifiedLines: true,
+    maxDiffDistance: 1,
+    maxChangeRatio: 0.45,
+    inlineMaxCharEdits: 0,
+  },
   dissimilarRaw: {
     mergeModifiedLines: true,
     maxChangeRatio: 1,
     maxDiffDistance: 1,
+    inlineMaxCharEdits: 0,
   },
   dissimilar: {
     mergeModifiedLines: true,
     maxChangeRatio: 0.45,
     maxDiffDistance: 1,
+    inlineMaxCharEdits: 0,
   },
   overview: {
     mergeModifiedLines: true,

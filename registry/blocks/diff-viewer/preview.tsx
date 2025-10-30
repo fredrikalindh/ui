@@ -77,7 +77,7 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
           <Slider
             id="maxChangeRatio"
             min={0}
-            max={0.99}
+            max={1}
             step={0.01}
             value={[maxChangeRatio]}
             onValueChange={(value) => setMaxChangeRatio(value[0])}

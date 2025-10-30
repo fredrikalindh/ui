@@ -53,7 +53,7 @@ const DiffViewer = ({ diff }: { diff: string }) => {
   description="Shows the raw diff without any grouping."
   src="/previews/diff-viewer/github"
 >
-This is how GitHub would show this diff. Inserted and deleted blocks are rendered separately, sometimes displayed far apart. 
+This is how GitHub would show this diff. Inserted and deleted blocks are rendered separately, sometimes far apart. 
 Take a look at line 4, where the `ChevronDown` icon is added to the import. You need to read two lines to understand that only an icon was added and nothing deleted.
 
 ```diff
@@ -108,7 +108,7 @@ const mergeAdjacentLines = (changes: _Change[]): Line[] => {
 >
 The problem with just merging *every* delete+insert pair is that when the lines are very different, the result is noisy. See line 6 – not very nice. 
 
-To solve this, we can add a maximum change ratio. So only lines where the change ratio is less than this threshold are merged.
+To solve this, we can add a maximum change ratio. So only lines where the change ratio is less than this limit are merged.
 
 ```ts
 const calculateChangeRatio = (a: string, b: string): number => {
@@ -135,9 +135,7 @@ if (current.type === "delete" && next.type === "insert"
 >
 Setting the max change ratio to `0.45` prevents the parser from merging line 6. Try playing with it to see what happens.
 
-But the diff doesn't always place deletions and insertions of modified lines next to each other. 
-
-Look at line 23. The deleted version of that line is displayed below line 42, making it very difficult to see that the only change is adding `min-h-16`.
+But deletions and insertions of modified lines are not always next to each other. Look at line 23. The deleted version of that line is displayed below line 42, making it very difficult to see that the only change is adding `min-h-16`.
 
 What if we find the best possible match for each deletion while maintaining the order? 
 </Preview>
@@ -168,3 +166,4 @@ if (!charDiff.exceededLimit) {
 }
 ```
 </Preview>
+
