@@ -1,14 +1,15 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
-  "name": "acme",
-  "homepage": "https://acme.com",
+  "name": "fredrika ui",
+  "homepage": "https://ui.fredrika.dev",
   "items": [
     {
       "name": "diff-viewer",
       "type": "registry:component",
       "title": "Diff Viewer",
       "description": "A diff viewer component",
-      "registryDependencies": ["button"],
+      "dependencies": ["refractor", "lucide-react", "gitdiff-parser", "diff"],
+      "registryDependencies": ["button", "https://ui.fredrika.dev/r/collapsible-card.json"],
       "files": [
         {
           "path": "registry/ui/diff/index.tsx",
@@ -36,36 +37,6 @@
           "target": "components/ui/diff/utils/guess-lang.ts"
         },
         {
-          "path": "registry/ui/collapsible-card.tsx",
-          "type": "registry:component",
-          "target": "components/ui/collapsible-card.tsx"
-        },
-        {
-          "path": "registry/ui/copy-button.tsx",
-          "type": "registry:component",
-          "target": "components/ui/copy-button.tsx"
-        },
-        {
-          "path": "components/blur-fade/blur-fade.tsx",
-          "type": "registry:component",
-          "target": "components/blur-fade/blur-fade.tsx"
-        },
-        {
-          "path": "components/blur-fade/fade.module.css",
-          "type": "registry:component",
-          "target": "components/blur-fade/fade.module.css"
-        },
-        {
-          "path": "lib/clamp.ts",
-          "type": "registry:lib",
-          "target": "lib/clamp.ts"
-        },
-        {
-          "path": "lib/utils.ts",
-          "type": "registry:lib",
-          "target": "lib/utils.ts"
-        },
-        {
           "path": "registry/blocks/diff-viewer/page.tsx",
           "type": "registry:page",
           "target": "app/diff-viewer/page.tsx"
@@ -82,6 +53,7 @@
       "type": "registry:component",
       "title": "Copy Button",
       "description": "Copy to clipboard button",
+      "dependencies": ["lucide-react"],
       "registryDependencies": ["button"],
       "files": [
         {
@@ -101,7 +73,8 @@
       "type": "registry:component",
       "title": "Collapsible Card",
       "description": "Collapsible container with header and content",
-      "registryDependencies": ["button", "copy-button"],
+      "dependencies": ["@radix-ui/react-collapsible", "lucide-react"],
+      "registryDependencies": ["button", "https://ui.fredrika.dev/r/copy-button.json"],
       "files": [
         {
           "path": "registry/ui/collapsible-card.tsx",
@@ -135,6 +108,7 @@
       "type": "registry:component",
       "title": "Button",
       "description": "UI button component",
+      "dependencies": ["@radix-ui/react-slot", "class-variance-authority"],
       "files": [
         {
           "path": "registry/ui/button.tsx",

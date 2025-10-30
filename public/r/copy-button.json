@@ -4,13 +4,16 @@
   "type": "registry:component",
   "title": "Copy Button",
   "description": "Copy to clipboard button",
+  "dependencies": [
+    "lucide-react"
+  ],
   "registryDependencies": [
     "button"
   ],
   "files": [
     {
       "path": "registry/ui/copy-button.tsx",
-      "content": "\"use client\";\n\nimport React, { useState } from \"react\";\n\nimport { Check, Copy } from \"lucide-react\";\nimport { Button } from \"./button\";\nimport { cn } from \"@/lib/utils\";\n\nexport const CopyButton = ({\n  value,\n  className,\n  ...props\n}: {\n  value: string;\n  className?: string;\n} & React.ComponentProps<\"button\">) => {\n  const [copied, setCopied] = useState(false);\n\n  const handleCopy = (e: React.MouseEvent<HTMLButtonElement>) => {\n    if (!value) return;\n    e.stopPropagation();\n    navigator.clipboard.writeText(value);\n    setCopied(true);\n    setTimeout(() => {\n      setCopied(false);\n    }, 2000);\n  };\n\n  return (\n    <Button\n      variant=\"ghost\"\n      size=\"icon\"\n      data-state={copied ? \"copied\" : \"not-copied\"}\n      {...props}\n      className={cn(\"transition-opacity relative flex-shrink-0\", className)}\n      onClick={handleCopy}\n    >\n      <span className=\"sr-only\">Copy</span>\n      <Check\n        className={cn(\n          \"w-4 h-4 absolute inset-0 m-auto transition-all duration-200\",\n          copied ? \"opacity-100 blur-0 scale-100\" : \"opacity-0 blur-sm scale-75\"\n        )}\n        aria-label=\"Copied\"\n      />\n      <Copy\n        className={cn(\n          \"w-4 h-4 absolute inset-0 m-auto transition-all duration-200\",\n          !copied\n            ? \"opacity-100 blur-0 scale-100\"\n            : \"opacity-0 blur-sm scale-75\"\n        )}\n        aria-label=\"Copy\"\n      />\n    </Button>\n  );\n};\n",
+      "content": "\"use client\";\n\nimport React, { useState } from \"react\";\n\nimport { Check, Copy } from \"lucide-react\";\nimport { Button } from \"@/registry/ui/button\";\nimport { cn } from \"@/lib/utils\";\n\nexport const CopyButton = ({\n  value,\n  className,\n  ...props\n}: {\n  value: string;\n  className?: string;\n} & React.ComponentProps<\"button\">) => {\n  const [copied, setCopied] = useState(false);\n\n  const handleCopy = (e: React.MouseEvent<HTMLButtonElement>) => {\n    if (!value) return;\n    e.stopPropagation();\n    navigator.clipboard.writeText(value);\n    setCopied(true);\n    setTimeout(() => {\n      setCopied(false);\n    }, 2000);\n  };\n\n  return (\n    <Button\n      variant=\"ghost\"\n      size=\"icon\"\n      data-state={copied ? \"copied\" : \"not-copied\"}\n      {...props}\n      className={cn(\"transition-opacity relative flex-shrink-0\", className)}\n      onClick={handleCopy}\n    >\n      <span className=\"sr-only\">Copy</span>\n      <Check\n        className={cn(\n          \"w-4 h-4 absolute inset-0 m-auto transition-all duration-200\",\n          copied ? \"opacity-100 blur-0 scale-100\" : \"opacity-0 blur-sm scale-75\"\n        )}\n        aria-label=\"Copied\"\n      />\n      <Copy\n        className={cn(\n          \"w-4 h-4 absolute inset-0 m-auto transition-all duration-200\",\n          !copied\n            ? \"opacity-100 blur-0 scale-100\"\n            : \"opacity-0 blur-sm scale-75\"\n        )}\n        aria-label=\"Copy\"\n      />\n    </Button>\n  );\n};\n",
       "type": "registry:component",
       "target": "components/ui/copy-button.tsx"
     },

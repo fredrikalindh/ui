@@ -4,6 +4,10 @@
   "type": "registry:component",
   "title": "Button",
   "description": "UI button component",
+  "dependencies": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ],
   "files": [
     {
       "path": "registry/ui/button.tsx",

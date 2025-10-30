@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 import { ChevronDown } from "lucide-react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { Button } from "./button";
+import { Button } from "@/registry/ui/button";
 import { CopyButton } from "./copy-button";
 import { clamp } from "@/lib/clamp";
 

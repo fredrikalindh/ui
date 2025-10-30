@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 
 import { Check, Copy } from "lucide-react";
-import { Button } from "./button";
+import { Button } from "@/registry/ui/button";
 import { cn } from "@/lib/utils";
 
 export const CopyButton = ({
