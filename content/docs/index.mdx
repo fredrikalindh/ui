@@ -50,15 +50,14 @@ const DiffViewer = ({ diff }: { diff: string }) => {
 };
 ```
 
-## Parsing diffs
-
 <Preview
   id="github"
   label="GitHub baseline"
   description="Shows the raw diff without any grouping."
   src="/previews/diff-viewer/github"
 >
-This is how GitHub would show this diff. Inserted and deleted blocks are rendered separately, sometimes far apart. 
+## Parsing diffs
+GitHub shows diffs without merging modified lines. Inserted and deleted blocks are rendered separately, sometimes far apart. 
 Take a look at line 4, where the `ChevronDown` icon is added to the import. You need to read two lines to understand that only an icon was added and nothing deleted.
 
 ```diff
@@ -172,3 +171,4 @@ if (!charDiff.exceededLimit) {
 ```
 </Preview>
 
+The focus of this project has been to experiment with different heuristics for merging modified lines to use for [asi.review](https://asi.review). It's not optimized for performance.

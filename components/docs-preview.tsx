@@ -150,7 +150,7 @@ export function PreviewSection({
       data-preview-description={description}
       data-active={isActive ? "true" : undefined}
       className={cn(
-        "relative flex flex-col gap-4 rounded-xl transition-colors bd-muted [&_p]:opacity-40 data-[active=true]:[&_p]:opacity-100 mb-16 [&_p]:transition-opacity [&_p]:duration-200 cursor-pointer",
+        "relative flex flex-col gap-4 rounded-xl transition-colors bd-muted [&_p]:opacity-40 data-[active=true]:[&_p]:opacity-100 my-16 [&_p]:transition-opacity [&_p]:duration-200 cursor-pointer",
         className
       )}
       onClick={handleClick}
