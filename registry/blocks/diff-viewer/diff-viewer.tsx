@@ -23,7 +23,6 @@ export function DiffViewer({
       data-section-id="diff-viewer"
       id="diff-viewer"
       className="my-4 text-[0.8rem] w-full"
-      title="File Changes"
       defaultOpen
     >
       <CollapsibleCardHeader>
