@@ -107,7 +107,7 @@ export const Slider = ({
         </span>
         <span
           ref={valueRef}
-          className="min-w-8 text-right text-sm font-medium tracking-tight text-black group-data-disabled/slider:opacity-50"
+          className="min-w-8 text-right text-sm font-medium tracking-tight text-foreground group-data-disabled/slider:opacity-50"
         >
           {typeof value === "number" ? value : value?.map((v) => v).join(", ")}
         </span>
