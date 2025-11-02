@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant light (&:is(.light *));
 
 @theme inline {
   --color-background: var(--background);
@@ -47,6 +48,9 @@
 
 :root {
   --radius: 0.625rem;
+}
+
+.light {
   --background: oklch(0.9911 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
