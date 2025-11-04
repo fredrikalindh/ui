@@ -150,7 +150,7 @@ export function PreviewSection({
       data-preview-description={description}
       data-active={isActive ? "true" : undefined}
       className={cn(
-        "relative flex flex-col gap-4 rounded-xl transition-[opacity,colors] bd-muted opacity-40 data-[active=true]:opacity-100 my-16 duration-200 cursor-pointer",
+        "relative flex flex-col gap-4 rounded-3xl transition-[opacity,colors] bd-muted opacity-40 data-[active=true]:opacity-100 my-16 duration-200 cursor-pointer",
         className
       )}
       onClick={handleClick}
@@ -186,11 +186,11 @@ export function DocsPreviewPane({
   return (
     <aside
       className={cn(
-        "hidden sticky top-0 lg:h-svh py-4 pr-4 flex-1 w-full rounded-2xl h-full max-h-svh overflow-hidden lg:flex flex-col z-20",
+        "hidden sticky top-0 lg:h-svh py-4 pr-4 flex-1 w-full rounded-3xl h-full max-h-svh overflow-hidden lg:flex flex-col z-20",
         className
       )}
     >
-      <div className="relative h-full w-full bg-muted overflow-hidden rounded-2xl flex-1 min-h-0">
+      <div className="relative h-full w-full bg-muted overflow-hidden rounded-3xl flex-1 min-h-0">
         <div className="absolute inset-0">{renderPreview(activePreview)}</div>
       </div>
     </aside>
