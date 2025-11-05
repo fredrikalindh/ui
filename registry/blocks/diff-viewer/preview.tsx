@@ -7,6 +7,7 @@ import type { ParseOptions } from "@/registry/ui/diff/utils/parse";
 import { Label } from "@/registry/ui/label";
 import { Slider } from "@/registry/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 
 type PreviewProps = {
   patch: string;
@@ -15,6 +16,7 @@ type PreviewProps = {
 
 const EXPANDED_WIDTH = 400;
 const EXPANDED_HEIGHT = 225;
+const EXPANDED_HEIGHT_WORD_DIFF = 48;
 const COLLAPSED_WIDTH = 220;
 const COLLAPSED_HEIGHT = 50;
 
@@ -67,18 +69,29 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
           maxChangeRatio,
           maxDiffDistance,
           inlineMaxCharEdits,
+          wordDiff: initialOptions?.wordDiff ?? false,
         }}
       />
 
       <motion.div
-        className="flex flex-col gap-2 p-4 max-w-md mx-auto absolute bottom-2 left-0 right-0 bg-card/40 backdrop-blur-sm rounded-xl border shadow-2xl z-100 overflow-hidden"
+        className={cn(
+          "flex flex-col gap-2 max-w-md mx-auto absolute bottom-2 left-0 right-0 rounded-xl shadow-2xl z-100",
+          {
+            "p-4 border overflow-hidden bg-card/40 backdrop-blur-sm":
+              !initialOptions?.wordDiff,
+          }
+        )}
         initial={{
           width: COLLAPSED_WIDTH,
           height: COLLAPSED_HEIGHT,
         }}
         animate={{
           width: mergeModifiedLines ? EXPANDED_WIDTH : COLLAPSED_WIDTH,
-          height: mergeModifiedLines ? EXPANDED_HEIGHT : COLLAPSED_HEIGHT,
+          height: mergeModifiedLines
+            ? initialOptions?.wordDiff
+              ? EXPANDED_HEIGHT_WORD_DIFF
+              : EXPANDED_HEIGHT
+            : COLLAPSED_HEIGHT,
           borderRadius: mergeModifiedLines ? 14 : 20,
         }}
         transition={{
@@ -89,19 +102,21 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
           delay: mergeModifiedLines ? 0 : 0.08,
         }}
       >
-        <div className="flex items-center gap-2 mb-2">
-          <Checkbox
-            id="mergeModifiedLines"
-            checked={mergeModifiedLines}
-            onCheckedChange={(state) => setMergeModifiedLines(state === true)}
-          />
-          <Label
-            className="cursor-pointer w-full"
-            onClick={() => setMergeModifiedLines(!mergeModifiedLines)}
-          >
-            Merge modified lines
-          </Label>
-        </div>
+        {!initialOptions?.wordDiff && (
+          <div className="flex items-center gap-2 mb-2">
+            <Checkbox
+              id="mergeModifiedLines"
+              checked={mergeModifiedLines}
+              onCheckedChange={(state) => setMergeModifiedLines(state === true)}
+            />
+            <Label
+              className="cursor-pointer w-full"
+              onClick={() => setMergeModifiedLines(!mergeModifiedLines)}
+            >
+              Merge modified lines
+            </Label>
+          </div>
+        )}
 
         <motion.div
           className="flex flex-col gap-2"
@@ -121,29 +136,33 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
             className="min-w-[360px]"
           />
 
-          <Slider
-            id="maxDiffDistance"
-            min={1}
-            max={60}
-            step={1}
-            value={[maxDiffDistance]}
-            onValueChange={(value) => setMaxDiffDistance(value[0])}
-            disabled={!mergeModifiedLines}
-            label="Diff distance"
-            className="min-w-[360px]"
-          />
+          {!initialOptions?.wordDiff && (
+            <Slider
+              id="maxDiffDistance"
+              min={1}
+              max={60}
+              step={1}
+              value={[maxDiffDistance]}
+              onValueChange={(value) => setMaxDiffDistance(value[0])}
+              disabled={!mergeModifiedLines}
+              label="Diff distance"
+              className="min-w-[360px]"
+            />
+          )}
 
-          <Slider
-            id="inlineMaxCharEdits"
-            min={0}
-            max={10}
-            step={1}
-            value={[inlineMaxCharEdits]}
-            onValueChange={(value) => setInlineMaxCharEdits(value[0])}
-            disabled={!mergeModifiedLines}
-            label="Char edits"
-            className="min-w-[360px]"
-          />
+          {!initialOptions?.wordDiff && (
+            <Slider
+              id="inlineMaxCharEdits"
+              min={0}
+              max={10}
+              step={1}
+              value={[inlineMaxCharEdits]}
+              onValueChange={(value) => setInlineMaxCharEdits(value[0])}
+              disabled={!mergeModifiedLines}
+              label="Char edits"
+              className="min-w-[360px]"
+            />
+          )}
         </motion.div>
       </motion.div>
     </div>

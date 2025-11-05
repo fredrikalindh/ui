@@ -4,6 +4,7 @@ description: An opinionated simple diff viewer for React.
 ogImage: "/unified-diff-viewer.png"
 ---
 
+Built for [asi.review](https://asi.review), but available as a standalone component.
 
 <Preview
   id="overview"
@@ -139,7 +140,7 @@ if (current.type === "delete" && next.type === "insert"
 >
 Setting the max change ratio to `0.45` prevents the parser from merging line 6. Try playing with it to see what happens.
 
-But deletions and insertions of modified lines are not always next to each other. Look at line 23. The deleted version of that line is displayed below line 42, making it very difficult to see that the only change is adding `min-h-16`.
+But deletions and insertions of modified lines are not always next to each other. Look at line 20. The deleted version of that line is displayed below line 38, making it very difficult to see that the only change is adding `min-h-16`.
 
 What if we find the best possible match for each deletion while maintaining the order? 
 </Preview>
@@ -151,7 +152,7 @@ What if we find the best possible match for each deletion while maintaining the 
   src="/previews/diff-viewer/complexMerged"
 >
 
-Now look at line 23 again. The separate insert and delete are merged together, making it much easier to understand what changed. 
+Now look at line 20 again. The separate insert and delete are merged together, making it much easier to understand what changed. 
 
 But why isn't the small typo that was fixed by adding `x` merged together? Try increasing the inline max char edits to see how it works.
 
@@ -171,4 +172,54 @@ if (!charDiff.exceededLimit) {
 ```
 </Preview>
 
-The focus of this project has been to experiment with different heuristics for merging modified lines to use for [asi.review](https://asi.review). It's not optimized for performance.
+<Preview
+  id="wordDiff"
+  label="Word diff"
+  description="Using `git diff --word-diff` to make it better."
+  src="/previews/diff-viewer/wordDiff"
+>
+
+### Using word-diff
+
+Git has another mode for generating diffs called `word-diff`. Github doesn't support this, but you can run it in your terminal like this:
+
+```bash
+git diff --word-diff --no-index <old-file> <new-file>
+```
+
+Unlike the default Myer's algorithm, word-diff outputs the diff on a word-by-word basis. Each inserted word is wrapped in `{+` and `+}` and each deleted word is wrapped in `[-` and `-]`. So we no longer need to guess which lines are modified. 
+
+Because it's parsing on word-level, we still need to merge adjacent insertions and deletions on each line using the same heuristics as before. 
+```diff
+import { Check, [-Copy-]{+Copy, ChevronDown+} } from "lucide-react";
+```
+
+
+It does not have any options for when lines are similar enough. Our anti-example will be merged as well:
+```diff
+import [-{ useTheme }-]{+* as Collapsible+} from [-"next-themes";-]{+"@radix-ui/react-collapsible";+}
+```
+
+
+</Preview>
+
+<Preview
+  id="separated"
+  label="Separate insertions and deletions"
+  description="Separate insertions and deletions on each line."
+  src="/previews/diff-viewer/separated"
+>
+
+So we can use the same change ratio to split merged lines into separate insertions and deletions.
+```ts
+// before
+import [-{ useTheme }-]{+* as Collapsible+} from [-"next-themes";-]{+"@radix-ui/react-collapsible";+}
+
+// after
+[-import { useTheme } from "next-themes";-]
+{+import * as Collapsible from "@radix-ui/react-collapsible";+}
+```
+
+And that's probably the best results we can get. 
+</Preview>
+

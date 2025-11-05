@@ -1,3 +1,43 @@
+// export const EXAMPLE_DIFF = `diff --git a/./registry/blocks/diff-viewer/before.tsx b/./registry/blocks/diff-viewer/after.tsx
+// index f73b4e9..d33d116 100644
+// --- a/./registry/blocks/diff-viewer/before.tsx
+// +++ b/./registry/blocks/diff-viewer/after.tsx
+// @@ -1,17 +1,26 @@
+//  import React, { useLayoutEffect, useRef, useState } from "react";
+//  import { Fade } from "./blur-fade/blur-fade";
+//  import { cn } from "@workspace/ui/lib/utils";
+// -import { Check, Copy } from "lucide-react";
+// +import { Check, Copy, ChevronDown } from "lucide-react";
+//  import { Button } from "@workspace/ui/components/button";
+// +import * as Collapsible from "@radix-ui/react-collapsible";
+
+//  const Root = ({
+//    className,
+// +  children,
+//    ...props
+//  }: React.ComponentProps<"div">) => {
+//    return (
+// -    <div
+// -      className={cn(
+// -        "relative text-[13p] rounded-xl overflow-hidden border bg-code",
+// -        className
+// -      )}
+// -      {...props}
+// -    />
+// +    <Collapsible.Root {...props}>
+// +      <div
+// +        className={cn(
+// +          "relative text-[13px] rounded-xl overflow-hidden border bg-code min-h-16",
+// +          className
+// +        )}
+// +      >
+// +        {children}
+// +      </div>
+// +    </Collapsible.Root>
+//    );
+//  };
+// `;
+
 export const EXAMPLE_DIFF = `diff --git a/apps/web/components/overflow-card.tsx b/apps/web/components/overflow-card.tsx
 index fa4d9c4..8d980f1 100644
 --- a/apps/web/components/overflow-card.tsx
