@@ -60,11 +60,6 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
 
   return (
     <div className="flex flex-col relative items-center h-full min-h-0 flex-1 pb-40 lg:pb-0">
-      <motion.div
-        animate={{
-          height: mergeModifiedLines ? 0 : 100,
-        }}
-      />
       <DiffViewer
         patch={patch}
         options={{

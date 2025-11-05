@@ -19,6 +19,7 @@ import {
 
 interface DiffContextValue {
   language: string;
+  fileStatus: File["type"];
 }
 
 const DiffContext = React.createContext<DiffContextValue | null>(null);
@@ -92,12 +93,13 @@ export const Diff: React.FC<DiffProps> = ({
   fileName,
   language = guessLang(fileName),
   hunks,
+  type,
   className,
   children,
   ...props
 }) => {
   return (
-    <DiffContext.Provider value={{ language }}>
+    <DiffContext.Provider value={{ language, fileStatus: type }}>
       <table
         {...props}
         className={cn(
@@ -138,7 +140,7 @@ const SkipBlockRow: React.FC<{
 const Line: React.FC<{
   line: LineType;
 }> = ({ line }) => {
-  const { language } = useDiffContext();
+  const { language, fileStatus } = useDiffContext();
   const Tag =
     line.type === "insert" ? "ins" : line.type === "delete" ? "del" : "span";
   const lineNumberNew =
@@ -151,8 +153,10 @@ const Line: React.FC<{
       data-line-old={lineNumberOld ?? undefined}
       data-line-kind={line.type}
       className={cn("whitespace-pre-wrap box-border border-none h-5 min-h-5", {
-        "bg-[var(--code-added)]/10": line.type === "insert",
-        "bg-[var(--code-removed)]/10": line.type === "delete",
+        "bg-[var(--code-added)]/10":
+          line.type === "insert" && fileStatus !== "add",
+        "bg-[var(--code-removed)]/10":
+          line.type === "delete" && fileStatus !== "delete",
       })}
     >
       <td
