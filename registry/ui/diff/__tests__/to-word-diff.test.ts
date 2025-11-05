@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+// @ts-ignore
 import { DIFF_MYERS } from "../../../../diff.ts";
+// @ts-ignore
 import { DIFF_WORD } from "../../../../diff-word.ts";
 import { toWordDiff } from "../utils/to-word-diff";
 

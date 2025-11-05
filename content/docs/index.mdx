@@ -223,33 +223,3 @@ import [-{ useTheme }-]{+* as Collapsible+} from [-"next-themes";-]{+"@radix-ui/
 And that's probably the best results we can get. 
 </Preview>
 
-{/* <Preview
-  id="ai"
-  label="AI"
-  description="Using AI to analyze the output of `git diff --word-diff`."
-  src="/previews/diff-viewer/ai"
->
-
-### Using AI
-
-If asking o3 to analyze the output of `git diff --word-diff`, it will identify lines that have changed more than 45% and need to be reformatted.
-
-````md prompt.md
-You are given a git *word-diff*. Your goal is to change lines that are incorrectly merged. Most lines should not change. 
-
-Rewrite lines 
-1. that are mixing deletions and insertions
-AND
-2. where MOST of the line changed, ~70% words are different
-
-How to rewrite:
-```
-[- entire old line -]
-{+ entire new line +}
-```
-
-The insertions and deletions can NEVER span multiple lines. 
-````
-
-</Preview>
- */}

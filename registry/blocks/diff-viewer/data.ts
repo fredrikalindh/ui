@@ -51,7 +51,7 @@ index fa4d9c4..8d980f1 100644
  import { Button } from "@workspace/ui/components/button";
 -import { useTheme } from "next-themes";
 +import * as Collapsible from "@radix-ui/react-collapsible";
-
+ 
  const Root = ({
    className,
 +  children,
@@ -61,7 +61,7 @@ index fa4d9c4..8d980f1 100644
 +}: React.ComponentProps<"div"> & {
 +  defaultOpen?: boolean;
 +}) => {
-
+ 
    return (
 +    <Collapsible.Root defaultOpen={defaultOpen}>
 +      <div

@@ -11,7 +11,6 @@ import { DiffOptionsPreview } from "@/registry/blocks/diff-viewer/preview";
 import { EXAMPLE_DIFF } from "@/registry/blocks/diff-viewer/data";
 import { ParseOptions } from "@/registry/ui/diff/utils";
 import { DIFF_WORD_EXAMPLE } from "@/diff-word-example";
-import { DIFF_WORD_AI } from "@/diff-word-ai";
 
 const OPTION_PRESETS: { [key: string]: Partial<ParseOptions> } = {
   github: {
@@ -69,10 +68,6 @@ const OPTION_PRESETS: { [key: string]: Partial<ParseOptions> } = {
     inlineMaxCharEdits: 0,
     wordDiff: true,
   },
-  ai: {
-    ai: true,
-    wordDiff: true,
-  },
 };
 
 function getOptionsFromSrc(src: string | undefined) {
@@ -92,13 +87,7 @@ function DiffDocsPaneRenderer() {
   return (
     <div className="h-full w-full bg-muted p-2 lg:px-6">
       <DiffOptionsPreview
-        patch={
-          options?.ai
-            ? DIFF_WORD_AI
-            : options?.wordDiff
-            ? DIFF_WORD_EXAMPLE
-            : EXAMPLE_DIFF
-        }
+        patch={options?.wordDiff ? DIFF_WORD_EXAMPLE : EXAMPLE_DIFF}
         initialOptions={options}
       />
     </div>
