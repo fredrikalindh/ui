@@ -171,8 +171,6 @@ if (!charDiff.exceededLimit) {
 ```
 </Preview>
 
-
-
 <Preview
   id="wordDiff"
   label="Word diff"
@@ -180,16 +178,58 @@ if (!charDiff.exceededLimit) {
   src="/previews/diff-viewer/wordDiff"
 >
 
-### A much better solution
+### Using word-diff
 
-Git has another mode for generating diffs called `word-diff`. It does what we've so far tried to do based on the default Github diff which is using Myer's algorithm. Unfortunately, Github doesn't support this mode yet.
+Git has another mode for generating diffs called `word-diff`. 
+```bash
+git diff --word-diff a.tsx b.tsx
+```
 
-The output looks like this:
+Unlike the default Myer's algorithm, word-diff outputs the diff on a word-by-word basis. Each inserted word is wrapped in `{+` and `+}` and each deleted word is wrapped in `[-` and `-]`. So we no longer need to guess which lines are modified. 
+
+Because it's parsing on word-level, we still need to merge adjacent insertions and deletions on each line using the same heuristics as before. 
 ```diff
 import { Check, [-Copy-]{+Copy, ChevronDown+} } from "lucide-react";
 ```
 
-Each inserted word is wrapped in `{+` and `+}` and each deleted word is wrapped in `[-` and `-]`. So we no longer need to guess which lines are modified, but we still need to merge adjacent insertions and deletions on each line using the same heuristics as before.
+
+It does not have any options for when lines are similar enough. Our anti-example will be merged as well:
+```diff
+import [-{ useTheme }-]{+* as Collapsible+} from [-"next-themes";-]{+"@radix-ui/react-collapsible";+}
+```
+
+Github doesn't support this mode yet.
 </Preview>
+
+<Preview
+  id="ai"
+  label="AI"
+  description="Using AI to analyze the output of `git diff --word-diff`."
+  src="/previews/diff-viewer/ai"
+>
+
+### Using AI
+
+If asking o3 to analyze the output of `git diff --word-diff`, it will identify lines that have changed more than 45% and need to be reformatted.
+
+````md prompt.md
+You are given a git *word-diff*. Your goal is to change lines that are incorrectly merged. Most lines should not change. 
+
+Rewrite lines 
+1. that are mixing deletions and insertions
+AND
+2. where MOST of the line changed, ~70% words are different
+
+How to rewrite:
+```
+[- entire old line -]
+{+ entire new line +}
+```
+
+The insertions and deletions can NEVER span multiple lines. 
+````
+
+</Preview>
+
 
 The focus of this project has been to experiment with different heuristics for merging modified lines to use for [asi.review](https://asi.review). It's not optimized for performance.

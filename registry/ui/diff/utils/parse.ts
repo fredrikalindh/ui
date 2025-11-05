@@ -39,6 +39,7 @@ export interface ParseOptions {
   mergeModifiedLines: boolean;
   inlineMaxCharEdits: number;
   wordDiff: boolean;
+  ai: boolean;
 }
 
 const calculateChangeRatio = (a: string, b: string): number => {
@@ -434,6 +435,8 @@ const defaultOptions: ParseOptions = {
   maxChangeRatio: 0.45,
   mergeModifiedLines: true,
   inlineMaxCharEdits: 4,
+  wordDiff: false,
+  ai: false,
 };
 
 export const parseDiff = (
