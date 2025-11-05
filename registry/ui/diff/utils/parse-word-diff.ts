@@ -5,13 +5,11 @@ interface ParseOptions {
   maxChangeRatio: number;
 }
 
-type LineKind = "normal" | "insert" | "delete";
+type LineKind = Line["type"];
 
 const HUNK_HEADER_REGEX = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)/;
 
 const TOKEN_REGEX = /\{\+([\s\S]*?)\+\}|\[-([\s\S]*?)-\]/g;
-
-const DIFF_HEADER_REGEX = /^diff --git (.+?) (.+)$/;
 
 const extractHunkContext = (header: string): string =>
   HUNK_HEADER_REGEX.exec(header)?.[5]?.trim() ?? "";
@@ -40,65 +38,62 @@ const insertSkipBlocks = (hunks: Hunk[]): (Hunk | SkipBlock)[] => {
 };
 
 const classifyLine = (line: string): LineKind => {
-  const hasInsert = line.includes("{+");
-  const hasDelete = line.includes("[-");
-  const hasTokens = hasInsert || hasDelete;
-
-  if (!hasTokens) return "normal";
-  if (hasInsert && hasDelete) return "normal";
-
-  const plainText = line.replace(TOKEN_REGEX, "");
-  if (plainText.trim().length > 0) return "normal";
-
-  if (hasInsert) return "insert";
-  if (hasDelete) return "delete";
+  const trimmed = line.trim();
+  const isInsert = trimmed.startsWith("{+") && trimmed.endsWith("+}");
+  if (isInsert) return "insert";
+  const isDelete = trimmed.startsWith("[-") && trimmed.endsWith("-]");
+  if (isDelete) return "delete";
 
   return "normal";
 };
 
 const mergeSegment = (segments: LineSegment[], segment: LineSegment): void => {
-  if (!segment.value) return;
-
   const previous = segments[segments.length - 1];
-  if (previous && previous.type === segment.type) {
+  if (previous?.type === segment.type) {
     previous.value += segment.value;
-    return;
+  } else {
+    segments.push(segment);
   }
-
-  segments.push(segment);
 };
 
-const mergeToken = (tokens: LineSegment[], token: LineSegment): void => {
-  if (!token.value) return;
-  const previous = tokens[tokens.length - 1];
-  if (previous && previous.type === token.type) {
-    previous.value += token.value;
-    return;
-  }
-  tokens.push({ ...token });
-};
-
-const normalizePath = (path: string): string => {
-  const trimmed = path.trim();
-  if (!trimmed || trimmed === "/dev/null") return "";
-  if (trimmed.startsWith("a/") || trimmed.startsWith("b/")) {
-    return trimmed.slice(2);
-  }
-  return trimmed;
-};
-
-const parseDiffHeaderPaths = (
+const parsePathFromFirstLine = (
   line: string
 ): { oldPath: string; newPath: string } => {
-  const match = DIFF_HEADER_REGEX.exec(line.trim());
-  if (!match) {
-    return { oldPath: "", newPath: "" };
+  const filesStr = line.slice(11);
+  let oldPath = "";
+  let newPath = "";
+
+  const quoteIndex = filesStr.indexOf('"');
+
+  switch (quoteIndex) {
+    case -1: {
+      const segs = filesStr.split(" ");
+      oldPath = segs[0]?.slice(2) ?? "";
+      newPath = segs[1]?.slice(2) ?? "";
+      break;
+    }
+
+    case 0: {
+      const nextQuoteIndex = filesStr.indexOf('"', 2);
+      oldPath = filesStr.slice(3, nextQuoteIndex);
+      const newQuoteIndex = filesStr.indexOf('"', nextQuoteIndex + 1);
+      if (newQuoteIndex < 0) {
+        newPath = filesStr.slice(nextQuoteIndex + 4);
+      } else {
+        newPath = filesStr.slice(newQuoteIndex + 3, -1);
+      }
+      break;
+    }
+
+    default: {
+      const segs = filesStr.split(" ");
+      oldPath = segs[0]?.slice(2) ?? "";
+      newPath = segs[1]?.slice(3, -1) ?? "";
+      break;
+    }
   }
 
-  return {
-    oldPath: match[1],
-    newPath: match[2],
-  };
+  return { oldPath, newPath };
 };
 
 export function mergeOverlappingEdits(tokens: LineSegment[]): LineSegment[] {
@@ -136,22 +131,25 @@ export function mergeOverlappingEdits(tokens: LineSegment[]): LineSegment[] {
       }
 
       if (p) {
-        out.push({ type: "normal", value: oldTxt.slice(0, p) });
+        mergeSegment(out, { type: "normal", value: oldTxt.slice(0, p) });
       }
 
       const oldMid = oldTxt.slice(p, oldTxt.length - s);
       const newMid = newTxt.slice(p, newTxt.length - s);
 
-      if (oldMid) out.push({ type: "delete", value: oldMid });
-      if (newMid) out.push({ type: "insert", value: newMid });
+      if (oldMid) mergeSegment(out, { type: "delete", value: oldMid });
+      if (newMid) mergeSegment(out, { type: "insert", value: newMid });
 
       if (s) {
-        out.push({ type: "normal", value: oldTxt.slice(oldTxt.length - s) });
+        mergeSegment(out, {
+          type: "normal",
+          value: oldTxt.slice(oldTxt.length - s),
+        });
       }
 
       i += 2;
     } else {
-      out.push(cur);
+      mergeSegment(out, cur);
       i += 1;
     }
   }
@@ -170,7 +168,7 @@ const buildSegments = (line: string): LineSegment[] => {
     const index = match.index ?? 0;
 
     if (index > lastIndex) {
-      mergeToken(tokens, {
+      mergeSegment(tokens, {
         type: fallbackType,
         value: line.slice(lastIndex, index),
       });
@@ -179,43 +177,26 @@ const buildSegments = (line: string): LineSegment[] => {
     const [fullMatch, insertValue, deleteValue] = match;
 
     if (insertValue !== undefined) {
-      mergeToken(tokens, { type: "insert", value: insertValue });
+      mergeSegment(tokens, { type: "insert", value: insertValue });
     } else if (deleteValue !== undefined) {
-      mergeToken(tokens, { type: "delete", value: deleteValue });
+      mergeSegment(tokens, { type: "delete", value: deleteValue });
     }
 
     lastIndex = index + fullMatch.length;
   }
 
   if (lastIndex < line.length) {
-    mergeToken(tokens, {
+    mergeSegment(tokens, {
       type: fallbackType,
       value: line.slice(lastIndex),
     });
   }
 
   if (tokens.length === 0) {
-    tokens.push({ type: fallbackType, value: "" });
+    return [{ type: fallbackType, value: "" }];
   }
 
-  const mergedTokens = mergeOverlappingEdits(tokens);
-
-  const segments: LineSegment[] = [];
-  for (const token of mergedTokens) {
-    mergeSegment(segments, {
-      type: token.type,
-      value: token.value,
-    });
-  }
-
-  if (segments.length === 0) {
-    segments.push({
-      type: fallbackType,
-      value: "",
-    });
-  }
-
-  return segments;
+  return mergeOverlappingEdits(tokens);
 };
 
 const calculateChangeRatio = (
@@ -265,17 +246,6 @@ const calculateChangeRatio = (
   };
 };
 
-const buildLineVersion = (
-  segments: LineSegment[],
-  variant: "old" | "new"
-): string =>
-  segments
-    .filter((segment) =>
-      variant === "old" ? segment.type !== "insert" : segment.type !== "delete"
-    )
-    .map((segment) => segment.value)
-    .join("");
-
 const stripWordDiffMarkers = (line: string): string =>
   line
     .replace(/\{\+/g, "")
@@ -288,8 +258,8 @@ interface FileBuilder extends Omit<File, "hunks"> {
 }
 
 const createFile = (oldPath = "", newPath = ""): FileBuilder => ({
-  oldPath: normalizePath(oldPath),
-  newPath: normalizePath(newPath),
+  oldPath: oldPath,
+  newPath: newPath,
   type: "modify",
   oldRevision: "",
   newRevision: "",
@@ -332,19 +302,19 @@ export const parseWordDiff = (
   options?: Partial<ParseOptions>
 ): File[] => {
   const files: File[] = [];
+  const maxChangeRatio = options?.maxChangeRatio;
 
   const normalized = diff.replace(/\r\n?/g, "\n");
   const lines = normalized.split("\n");
   const linesLen = lines.length;
 
-  const STAT_START = "start" as const;
-  const STAT_HEADER = "header" as const;
-  const STAT_HUNK = "hunk" as const;
-  type ParseState = typeof STAT_START | typeof STAT_HEADER | typeof STAT_HUNK;
-  let state: ParseState = STAT_START;
+  const STAT_START = 2;
+  const STAT_HUNK = 5;
+
+  let stat = STAT_START;
 
   let currentFile: FileBuilder | null = null;
-  let pendingFileType: FileBuilder["type"] | null = null;
+  let currentFileType: FileBuilder["type"] | null = null;
   let currentHunk: Hunk | null = null;
   let currentHunkLines: Line[] = [];
   let oldCursor = 0;
@@ -372,7 +342,9 @@ export const parseWordDiff = (
     if (!currentFile) return;
     flushHunk();
 
-    currentFile.type = pendingFileType ?? currentFile.type ?? "modify";
+    currentFile.type = currentFileType ?? currentFile.type ?? "modify";
+    currentFile.oldPath = currentFile.oldPath;
+    currentFile.newPath = currentFile.newPath;
 
     const hunksWithSkips = insertSkipBlocks(currentFile.hunks);
     files.push({
@@ -381,192 +353,144 @@ export const parseWordDiff = (
     });
 
     currentFile = null;
-    pendingFileType = null;
-    state = STAT_START;
+    currentFileType = null;
+    stat = STAT_START;
   };
 
   let i = 0;
+  // Basically same as gitdiff-parser (https://www.npmjs.com/package/gitdiff-parser) except for how we're parsing lines
+  // TODO: improve readability
   while (i < linesLen) {
     const line = lines[i];
 
-    if (line.startsWith("diff --git ")) {
+    if (line.indexOf("diff --git") === 0) {
       flushFile();
 
-      const paths = parseDiffHeaderPaths(line);
+      const paths = parsePathFromFirstLine(line);
       currentFile = createFile(paths.oldPath, paths.newPath);
-      pendingFileType = null;
-      state = STAT_HEADER;
-      i += 1;
-      continue;
-    }
+      currentFileType = null;
+      stat = STAT_START;
 
-    if (!currentFile) {
-      i += 1;
-      continue;
-    }
+      let simiLine: string | undefined;
+      let infoType: string | undefined;
 
-    if (line.startsWith("Binary ")) {
-      currentFile.isBinary = true;
-      if (line.includes("/dev/null and")) {
-        pendingFileType = "add";
-      } else if (line.includes("and /dev/null")) {
-        pendingFileType = "delete";
-      }
-      currentFile.type = pendingFileType ?? currentFile.type ?? "modify";
-      flushFile();
-      i += 1;
-      continue;
-    }
+      simiLoop: while ((simiLine = lines[++i])) {
+        const spaceIndex = simiLine.indexOf(" ");
+        infoType = spaceIndex > -1 ? simiLine.slice(0, spaceIndex) : infoType;
 
-    if (state === STAT_HEADER) {
-      if (!line.trim()) {
-        i += 1;
-        continue;
-      }
+        switch (infoType) {
+          case "diff":
+            i--;
+            break simiLoop;
 
-      if (line.startsWith("diff --git ")) {
-        flushFile();
-        continue;
-      }
-
-      if (line.startsWith("index ")) {
-        const match = /^index ([0-9a-f]+)\.\.([0-9a-f]+)(?: (\d+))?/.exec(line);
-        if (match) {
-          currentFile.oldRevision = match[1];
-          currentFile.newRevision = match[2];
-          if (match[3]) {
-            currentFile.oldMode = match[3];
-            currentFile.newMode = match[3];
+          case "deleted":
+          case "new": {
+            const leftStr = simiLine.slice(spaceIndex + 1);
+            if (leftStr.indexOf("file mode") === 0 && currentFile) {
+              if (infoType === "new") {
+                currentFile.newMode = leftStr.slice(10);
+              } else {
+                currentFile.oldMode = leftStr.slice(10);
+              }
+            }
+            break;
           }
+
+          case "similarity":
+            if (currentFile) {
+              const parts = simiLine.split(" ");
+              const percent = parseInt(parts[2], 10);
+              if (!Number.isNaN(percent)) {
+                currentFile.similarity = percent;
+              }
+            }
+            break;
+
+          case "index":
+            if (currentFile) {
+              const segs = simiLine.slice(spaceIndex + 1).split(" ");
+              const revs = segs[0].split("..");
+              currentFile.oldRevision = revs[0] ?? "";
+              currentFile.newRevision = revs[1] ?? "";
+
+              if (segs[1]) {
+                currentFile.oldMode = segs[1];
+                currentFile.newMode = segs[1];
+              }
+            }
+            break;
+
+          case "copy":
+          case "rename":
+            if (currentFile) {
+              const infoStr = simiLine.slice(spaceIndex + 1);
+              if (infoStr.indexOf("from") === 0) {
+                currentFile.oldPath = infoStr.slice(5);
+              } else {
+                currentFile.newPath = infoStr.slice(3);
+              }
+              currentFileType = infoType as FileBuilder["type"];
+            }
+            break;
+
+          case "---":
+            if (currentFile) {
+              let oldPath = simiLine.slice(spaceIndex + 1);
+              const nextLine = lines[++i] ?? "";
+              let newPath = nextLine.slice(4);
+
+              if (oldPath === "/dev/null") {
+                newPath = newPath.slice(2);
+                currentFileType = "add";
+              } else if (newPath === "/dev/null") {
+                oldPath = oldPath.slice(2);
+                currentFileType = "delete";
+              } else {
+                // Only set to "modify" if type hasn't been set already (e.g., by rename/copy)
+                if (currentFileType === null) {
+                  currentFileType = "modify";
+                }
+                oldPath = oldPath.slice(2);
+                newPath = newPath.slice(2);
+              }
+
+              if (oldPath) {
+                currentFile.oldPath = oldPath;
+              }
+              if (newPath) {
+                currentFile.newPath = newPath;
+              }
+
+              stat = STAT_HUNK;
+              break simiLoop;
+            }
+            break;
+
+          default:
+            break;
         }
-        i += 1;
-        continue;
       }
 
-      if (line.startsWith("similarity index ")) {
-        const match = /^similarity index (\d+)%/.exec(line);
-        if (match) {
-          currentFile.similarity = Number(match[1]);
-        }
-        i += 1;
-        continue;
+      if (currentFile) {
+        currentFile.type = currentFileType ?? currentFile.type ?? "modify";
       }
-
-      if (line.startsWith("new file mode ")) {
-        pendingFileType = "add";
-        currentFile.newMode = line.slice("new file mode ".length);
-        i += 1;
-        continue;
+    } else if (line.indexOf("Binary") === 0) {
+      if (currentFile) {
+        currentFile.isBinary = true;
+        currentFile.type =
+          line.indexOf("/dev/null and") >= 0
+            ? "add"
+            : line.indexOf("and /dev/null") >= 0
+            ? "delete"
+            : "modify";
       }
-
-      if (line.startsWith("deleted file mode ")) {
-        pendingFileType = "delete";
-        currentFile.oldMode = line.slice("deleted file mode ".length);
-        i += 1;
-        continue;
-      }
-
-      if (line.startsWith("old mode ")) {
-        currentFile.oldMode = line.slice("old mode ".length);
-        i += 1;
-        continue;
-      }
-
-      if (line.startsWith("new mode ")) {
-        currentFile.newMode = line.slice("new mode ".length);
-        i += 1;
-        continue;
-      }
-
-      if (line.startsWith("rename from ")) {
-        pendingFileType = "rename";
-        currentFile.oldPath = normalizePath(line.slice("rename from ".length));
-        i += 1;
-        continue;
-      }
-
-      if (line.startsWith("rename to ")) {
-        pendingFileType = "rename";
-        currentFile.newPath = normalizePath(line.slice("rename to ".length));
-        i += 1;
-        continue;
-      }
-
-      if (line.startsWith("copy from ")) {
-        pendingFileType = "copy";
-        currentFile.oldPath = normalizePath(line.slice("copy from ".length));
-        i += 1;
-        continue;
-      }
-
-      if (line.startsWith("copy to ")) {
-        pendingFileType = "copy";
-        currentFile.newPath = normalizePath(line.slice("copy to ".length));
-        i += 1;
-        continue;
-      }
-
-      if (line.startsWith("--- ")) {
-        const oldPathRaw = line.slice(4);
-        const nextLine = lines[i + 1];
-        let newPathRaw = "";
-        if (nextLine?.startsWith("+++ ")) {
-          newPathRaw = nextLine.slice(4);
-          i += 1;
-        }
-
-        const normalizedOldPath = normalizePath(oldPathRaw);
-        const normalizedNewPath = normalizePath(newPathRaw);
-
-        const oldIsDevNull = oldPathRaw === "/dev/null";
-        const newIsDevNull = newPathRaw === "/dev/null";
-
-        if (oldIsDevNull && !newIsDevNull) {
-          pendingFileType = pendingFileType ?? "add";
-        } else if (!oldIsDevNull && newIsDevNull) {
-          pendingFileType = pendingFileType ?? "delete";
-        } else if (!pendingFileType) {
-          pendingFileType = currentFile.type ?? "modify";
-        }
-
-        if (oldIsDevNull) {
-          currentFile.oldPath = "";
-        } else if (normalizedOldPath) {
-          currentFile.oldPath = normalizedOldPath;
-        }
-
-        if (newIsDevNull) {
-          currentFile.newPath = "";
-        } else if (normalizedNewPath) {
-          currentFile.newPath = normalizedNewPath;
-        }
-
-        currentFile.type = pendingFileType ?? "modify";
-        state = STAT_HUNK;
-        i += 1;
-        continue;
-      }
-
-      if (line.startsWith("@@ ")) {
-        currentFile.type = pendingFileType ?? currentFile.type ?? "modify";
-        state = STAT_HUNK;
-        continue;
-      }
-
-      i += 1;
-      continue;
-    }
-
-    if (state === STAT_HUNK) {
-      if (line.startsWith("diff --git ")) {
-        flushFile();
-        continue;
-      }
-
-      if (line.startsWith("@@ ")) {
+      stat = STAT_START;
+      currentFileType = null;
+      flushFile();
+    } else if (stat === STAT_HUNK && currentFile) {
+      if (line.indexOf("@@") === 0) {
         flushHunk();
-        const header = line;
-        const hunkMeta = parseHunkHeader(header);
+        const hunkMeta = parseHunkHeader(line);
 
         currentHunk = {
           ...hunkMeta,
@@ -578,107 +502,86 @@ export const parseWordDiff = (
         newCursor = hunkMeta.newStart;
         oldLineCount = 0;
         newLineCount = 0;
-        i += 1;
-        continue;
-      }
+      } else if (currentHunk) {
+        if (line.indexOf("\\ No newline at end of file") === 0) {
+          currentFile.oldEndingNewLine = false;
+          currentFile.newEndingNewLine = false;
+        } else {
+          const kind = classifyLine(line);
 
-      if (!currentHunk) {
-        i += 1;
-        continue;
-      }
+          if (kind === "insert") {
+            const value = stripWordDiffMarkers(line);
 
-      if (line.startsWith("\\ No newline at end of file")) {
-        currentFile.oldEndingNewLine = false;
-        currentFile.newEndingNewLine = false;
-        i += 1;
-        continue;
-      }
+            const insertLine: Line = {
+              type: "insert",
+              lineNumber: newCursor,
+              isInsert: true,
+              content: [{ type: "normal", value }],
+            };
+            currentHunkLines.push(insertLine);
+            newCursor += 1;
+            newLineCount += 1;
+          } else if (kind === "delete") {
+            const value = stripWordDiffMarkers(line);
+            const deleteLine: Line = {
+              type: "delete",
+              lineNumber: oldCursor,
+              isDelete: true,
+              content: [{ type: "normal", value }],
+            };
+            currentHunkLines.push(deleteLine);
+            oldCursor += 1;
+            oldLineCount += 1;
+          } else {
+            const segments = buildSegments(line);
+            const changeStats = calculateChangeRatio(segments);
 
-      const kind = classifyLine(line);
+            if (
+              changeStats.hasInsert &&
+              changeStats.hasDelete &&
+              maxChangeRatio !== undefined &&
+              changeStats.ratio > maxChangeRatio
+            ) {
+              if (changeStats.deleteValue) {
+                const deleteLine: Line = {
+                  type: "delete",
+                  lineNumber: oldCursor,
+                  isDelete: true,
+                  content: [{ type: "normal", value: changeStats.deleteValue }],
+                };
+                currentHunkLines.push(deleteLine);
+                oldCursor += 1;
+                oldLineCount += 1;
+              }
 
-      if (kind === "insert") {
-        const value = stripWordDiffMarkers(line);
-        const segments: LineSegment[] = [{ type: "normal", value }];
-        const insertLine: Line = {
-          type: "insert",
-          lineNumber: newCursor,
-          isInsert: true,
-          content: segments,
-        };
-        currentHunkLines.push(insertLine);
-        newCursor += 1;
-        newLineCount += 1;
-        i += 1;
-        continue;
-      }
-
-      if (kind === "delete") {
-        const value = stripWordDiffMarkers(line);
-        const segments: LineSegment[] = [{ type: "normal", value }];
-        const deleteLine: Line = {
-          type: "delete",
-          lineNumber: oldCursor,
-          isDelete: true,
-          content: segments,
-        };
-        currentHunkLines.push(deleteLine);
-        oldCursor += 1;
-        oldLineCount += 1;
-        i += 1;
-        continue;
-      }
-
-      const segments = buildSegments(line);
-      const changeStats = calculateChangeRatio(segments);
-
-      if (
-        changeStats.hasInsert &&
-        changeStats.hasDelete &&
-        options?.maxChangeRatio &&
-        changeStats.ratio > options?.maxChangeRatio
-      ) {
-        if (changeStats.deleteValue) {
-          const deleteLine: Line = {
-            type: "delete",
-            lineNumber: oldCursor,
-            isDelete: true,
-            content: [{ type: "normal", value: changeStats.deleteValue }],
-          };
-          currentHunkLines.push(deleteLine);
-          oldCursor += 1;
-          oldLineCount += 1;
+              if (changeStats.insertValue) {
+                const insertLine: Line = {
+                  type: "insert",
+                  lineNumber: newCursor,
+                  isInsert: true,
+                  content: [{ type: "normal", value: changeStats.insertValue }],
+                };
+                currentHunkLines.push(insertLine);
+                newCursor += 1;
+                newLineCount += 1;
+              }
+            } else {
+              const normalLine: Line = {
+                type: "normal",
+                isNormal: true,
+                oldLineNumber: oldCursor,
+                newLineNumber: newCursor,
+                content: segments,
+              };
+              currentHunkLines.push(normalLine);
+              oldCursor += 1;
+              newCursor += 1;
+              oldLineCount += 1;
+              newLineCount += 1;
+            }
+          }
         }
-
-        if (changeStats.insertValue) {
-          const insertLine: Line = {
-            type: "insert",
-            lineNumber: newCursor,
-            isInsert: true,
-            content: [{ type: "normal", value: changeStats.insertValue }],
-          };
-          currentHunkLines.push(insertLine);
-          newCursor += 1;
-          newLineCount += 1;
-        }
-
-        i += 1;
-        continue;
       }
-
-      const normalLine: Line = {
-        type: "normal",
-        isNormal: true,
-        oldLineNumber: oldCursor,
-        newLineNumber: newCursor,
-        content: segments,
-      };
-      currentHunkLines.push(normalLine);
-      oldCursor += 1;
-      newCursor += 1;
-      oldLineCount += 1;
-      newLineCount += 1;
-      i += 1;
-      continue;
     }
 
     i += 1;

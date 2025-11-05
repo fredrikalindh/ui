@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mergeOverlappingEdits, parseWordDiff } from "../utils/parse-word-diff";
 import { DIFF_WORD } from "../../../../diff-word";
 import { DIFF_WORD_EXAMPLE } from "../../../../diff-word-example";
-import type { LineSegment } from "../utils/parse";
+import type { Hunk, LineSegment } from "../utils/parse";
 
 const collectLines = () =>
   parseWordDiff(DIFF_WORD).flatMap((file) =>
@@ -55,7 +55,7 @@ index 3b18e7a..0000000
         const header = `diff --git a/src/alpha.c b/src/beta.c
 similarity index 100%
 rename from src/alpha.c
-rename to   src/beta.c`;
+rename to src/beta.c`;
         const [file] = parseWordDiff(header);
         expect(file?.type).toBe("rename");
         expect(file?.oldPath).toBe("src/alpha.c");
@@ -116,7 +116,12 @@ const [-Inpt-]{+Input+} = () => {
 {+  +}return <div>Input</div>;
 };
 `);
+
+      const hunk = files[0]?.hunks.filter((block) => block.type === "hunk");
       expect(files[0]?.hunks).toHaveLength(2);
+      expect(hunk[0]?.type).toBe("hunk");
+      expect(hunk[0]?.newStart).toBe(1);
+      expect(hunk[1]?.newStart).toBe(4);
     });
   });
 
@@ -205,10 +210,8 @@ plain unchanged line
         { type: "normal", value: " value" },
       ]);
     });
-  });
-
-  it("preserves empty lines", () => {
-    const diff = `diff --git a/file.txt b/file.txt
+    it("preserves empty lines", () => {
+      const diff = `diff --git a/file.txt b/file.txt
 index c0d0fb4..7e09cb7 100644
 --- a/file.txt
 +++ b/file.txt
@@ -216,37 +219,95 @@ index c0d0fb4..7e09cb7 100644
 
 {+brand new line+}
 `;
-    const [file] = parseWordDiff(diff);
-    const hunk = file?.hunks.find((block) => block.type === "hunk");
-    const emptyLine = hunk?.lines.find(
-      (line) =>
-        line.type === "normal" &&
-        line.content.every((segment) => segment.value === "")
-    );
-    expect(emptyLine).toBeDefined();
+      const [file] = parseWordDiff(diff);
+      const hunk = file?.hunks.find((block) => block.type === "hunk");
+      const emptyLine = hunk?.lines.find(
+        (line) =>
+          line.type === "normal" &&
+          line.content.every((segment) => segment.value === "")
+      );
+      expect(emptyLine).toBeDefined();
+    });
   });
 
   describe("merge edited words", () => {
-    it("merges overlapping delete/insert pairs into minimal edits");
-    it("doesn't merge non-overlapping delete/insert pairs");
+    it("merges overlapping delete/insert pairs into minimal edits", () => {
+      const tokens: LineSegment[] = [
+        { type: "normal", value: "prefix " },
+        { type: "delete", value: "Copy" },
+        { type: "insert", value: "Copy, ChevronDown" },
+        { type: "normal", value: " suffix" },
+      ];
+
+      expect(mergeOverlappingEdits(tokens)).toEqual([
+        { type: "normal", value: "prefix Copy" },
+        { type: "insert", value: ", ChevronDown" },
+        { type: "normal", value: " suffix" },
+      ]);
+    });
+
+    it("doesn't merge non-overlapping delete/insert pairs", () => {
+      const tokens: LineSegment[] = [
+        { type: "normal", value: "prefix " },
+        { type: "delete", value: "old" },
+        { type: "insert", value: "new" },
+        { type: "normal", value: " suffix" },
+      ];
+
+      expect(mergeOverlappingEdits(tokens)).toEqual([
+        { type: "normal", value: "prefix " },
+        { type: "delete", value: "old" },
+        { type: "insert", value: "new" },
+        { type: "normal", value: " suffix" },
+      ]);
+    });
   });
 
-  it("merges overlapping delete/insert pairs into minimal edits", () => {
-    const tokens: LineSegment[] = [
-      { type: "normal", value: "prefix " },
-      { type: "delete", value: "Copy" },
-      { type: "insert", value: "Copy, ChevronDown" },
-      { type: "normal", value: " suffix" },
-    ];
+  describe("split weird merges into separate lines", () => {
+    it("splits a merge of a delete and an insert into two lines", () => {
+      const diff = `diff --git a/file.tsx b/file.tsx
+index 1111111..2222222 100644
+--- a/file.tsx
++++ b/file.tsx
+@@ -1,1 +1,2 @@
+import [-{ useTheme }-]{+* as Collapsible+} from [-"next-themes";-]{+"@radix-ui/react-collapsible";+}
+`;
 
-    expect(mergeOverlappingEdits(tokens)).toEqual([
-      { type: "normal", value: "prefix " },
-      { type: "normal", value: "Copy" },
-      { type: "insert", value: ", ChevronDown" },
-      { type: "normal", value: " suffix" },
-    ]);
+      const [file] = parseWordDiff(diff, { maxChangeRatio: 0.45 });
+      const hunk = file?.hunks.find((block) => block.type === "hunk");
+      const lines = hunk?.lines ?? [];
+
+      const deletedImport = lines.find(
+        (line) =>
+          line.type === "delete" &&
+          line.content.some((segment) =>
+            segment.value.includes('import { useTheme } from "next-themes";')
+          )
+      );
+      const insertedImport = lines.find(
+        (line) =>
+          line.type === "insert" &&
+          line.content.some((segment) =>
+            segment.value.includes(
+              'import * as Collapsible from "@radix-ui/react-collapsible";'
+            )
+          )
+      );
+
+      expect(deletedImport).toBeDefined();
+      expect(insertedImport).toBeDefined();
+
+      expect(deletedImport?.content).toEqual([
+        { type: "normal", value: 'import { useTheme } from "next-themes";' },
+      ]);
+      expect(insertedImport?.content).toEqual([
+        {
+          type: "normal",
+          value: 'import * as Collapsible from "@radix-ui/react-collapsible";',
+        },
+      ]);
+    });
   });
-
   it("parses diff metadata into file entries", () => {
     const files = parseWordDiff(DIFF_WORD);
 
