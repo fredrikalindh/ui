@@ -1,0 +1,38 @@
+4c4,5
+< import { Check, Copy } from "lucide-react";
+---
+> 
+> import { Check, Copy, ChevronDown } from "lucide-react";
+5a7
+> import * as Collapsible from "@radix-ui/react-collapsible";
+7c9,16
+< const Root = ({ className, ...props }: React.ComponentProps<"div">) => {
+---
+> const Root = ({
+>   className,
+>   children,
+>   defaultOpen = true,
+>   ...props
+> }: React.ComponentProps<"div"> & {
+>   defaultOpen?: boolean;
+> }) => {
+9,15c18,28
+<     <div
+<       {...props}
+<       className={cn(
+<         "relative text-[13p] rounded-xl overflow-hidden border bg-code",
+<         className
+<       )}
+<     />
+---
+>     <Collapsible.Root defaultOpen={defaultOpen}>
+>       <div
+>         {...props}
+>         className={cn(
+>           "relative text-[13px] rounded-xl overflow-hidden border bg-code min-h-16",
+>           className
+>         )}
+>       >
+>         {children}
+>       </div>
+>     </Collapsible.Root>
