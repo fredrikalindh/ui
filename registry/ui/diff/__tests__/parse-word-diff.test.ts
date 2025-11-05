@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { mergeOverlappingEdits, parseWordDiff } from "../utils/parse-word-diff";
-import { DIFF_WORD } from "../../../../diff-word";
-import { DIFF_WORD_EXAMPLE } from "../../../../diff-word-example";
-import type { Hunk, LineSegment } from "../utils/parse";
+import { DIFF_WORD } from "./diff-word";
+import { DIFF_WORD_EXAMPLE } from "./diff-word-example";
+import type { LineSegment } from "../utils/parse";
 
 const collectLines = () =>
   parseWordDiff(DIFF_WORD).flatMap((file) =>
