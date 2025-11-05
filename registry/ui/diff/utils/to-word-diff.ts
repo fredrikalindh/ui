@@ -1,24 +1,27 @@
-import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import parseDiff from "parse-diff";
+import { diffArrays } from "diff";
 
 const DIFF_HEADER_PREFIX = "diff --git ";
 const NO_NEWLINE_MARKER = "\\ No newline at end of file";
-const WORKING_DIR_PATH = process.cwd();
-interface FileDiff {
+
+interface RawFileDiff {
   headers: string[];
   hunks: string[];
+}
+
+interface Token {
+  value: string;
+  trailing: string;
 }
 
 const joinLines = (segments: string[]): string =>
   segments.length > 0 ? `${segments.join("\n")}\n` : "";
 
-const parseFileDiffs = (patch: string): FileDiff[] => {
+const collectRawDiffs = (patch: string): RawFileDiff[] => {
   const lines = patch.split("\n");
-  const files: FileDiff[] = [];
+  const files: RawFileDiff[] = [];
 
-  let current: FileDiff | null = null;
+  let current: RawFileDiff | null = null;
   let collectingHunks = false;
 
   for (const line of lines) {
@@ -52,27 +55,23 @@ const parseFileDiffs = (patch: string): FileDiff[] => {
   return files.filter((file) => file.hunks.length > 0);
 };
 
-const buildSnapshots = (
-  hunkLines: string[]
-): { before: string; after: string } => {
+const buildChunkSnapshot = (chunk: parseDiff.Chunk): { before: string; after: string } => {
   const before: string[] = [];
   const after: string[] = [];
 
-  for (const line of hunkLines) {
-    if (!line || line.startsWith("@@") || line === NO_NEWLINE_MARKER) continue;
+  chunk.changes.forEach((change) => {
+    if (change.content === NO_NEWLINE_MARKER) return;
 
-    const prefix = line[0];
-    const content = line.slice(1);
-
-    if (prefix === " ") {
-      before.push(content);
-      after.push(content);
-    } else if (prefix === "-") {
-      before.push(content);
-    } else if (prefix === "+") {
-      after.push(content);
+    const line = change.content.slice(1);
+    if (change.type === "del") {
+      before.push(line);
+    } else if (change.type === "add") {
+      after.push(line);
+    } else {
+      before.push(line);
+      after.push(line);
     }
-  }
+  });
 
   return {
     before: joinLines(before),
@@ -80,52 +79,137 @@ const buildSnapshots = (
   };
 };
 
-const computeWordDiff = (before: string, after: string): string[] => {
-  const tempDir = mkdtempSync(join(tmpdir(), "to-word-diff-"));
-  const beforePath = join(tempDir, "before.patch");
-  const afterPath = join(tempDir, "after.patch");
+const splitWords = (text: string): Token[] => {
+  const tokens: Token[] = [];
+  const regex = /([^\s]+)(\s*)/g;
+  let match: RegExpExecArray | null;
 
-  try {
-    writeFileSync(beforePath, before, "utf8");
-    writeFileSync(afterPath, after, "utf8");
-
-    const result = spawnSync(
-      "git",
-      ["diff", "--word-diff", "--no-index", beforePath, afterPath],
-      {
-        encoding: "utf8",
-      }
-    );
-
-    if (result.error) {
-      throw result.error;
-    }
-
-    if (result.status !== 0 && result.status !== 1) {
-      const message = result.stderr || result.stdout || "git diff failed";
-      throw new Error(message);
-    }
-
-    const lines = result.stdout.trimEnd().split("\n");
-    const start = lines.findIndex((line) => line.startsWith("@@"));
-    return start === -1 ? [] : lines.slice(start);
-  } finally {
-    rmSync(tempDir, { recursive: true, force: true });
+  while ((match = regex.exec(text)) !== null) {
+    tokens.push({ value: match[1], trailing: match[2] });
   }
+
+  return tokens;
+};
+
+const wrapValue = (value: string, start: string, end: string): string =>
+  value
+    .split("\n")
+    .map((line) => {
+      if (!line) return line;
+      const match = line.match(/(\s*)$/);
+      const trailing = match ? match[1] : "";
+      const content = line.slice(0, line.length - trailing.length);
+      if (content) {
+        return `${start}${content}${end}${trailing}`;
+      }
+      return `${start}${line}${end}`;
+    })
+    .join("\n");
+
+const computeWordDiff = (before: string, after: string): string => {
+  const beforeTokens = splitWords(before);
+  const afterTokens = splitWords(after);
+  const parts = diffArrays(
+    beforeTokens.map((token) => token.value),
+    afterTokens.map((token) => token.value)
+  );
+
+  let beforeIdx = 0;
+  let afterIdx = 0;
+  let pendingTrailing = "";
+  let result = "";
+
+  const extract = (tokens: Token[], index: number, count: number) => {
+    let content = "";
+    for (let i = 0; i < count; i += 1) {
+      const token = tokens[index + i];
+      const isLast = i === count - 1;
+      content += token.value;
+      if (!isLast) content += token.trailing;
+    }
+    const trailing = count > 0 ? tokens[index + count - 1].trailing : "";
+    return { content, trailing };
+  };
+
+  const flushPending = () => {
+    if (pendingTrailing) {
+      result += pendingTrailing;
+      pendingTrailing = "";
+    }
+  };
+
+  for (let partIdx = 0; partIdx < parts.length; partIdx += 1) {
+    const part = parts[partIdx];
+    const nextPart = parts[partIdx + 1];
+    const count = part.value.length;
+
+    if (part.added) {
+      flushPending();
+      const { content, trailing } = extract(afterTokens, afterIdx, count);
+      if (content.trim() === "" && trailing.trim() === "") {
+        result += content + trailing;
+      } else {
+        result += wrapValue(content, "{+", "+}");
+        result += trailing;
+      }
+      afterIdx += count;
+      continue;
+    }
+
+    if (part.removed) {
+      const { content } = extract(beforeTokens, beforeIdx, count);
+      if (nextPart && nextPart.added) {
+        flushPending();
+      }
+      if (content.trim() !== "") {
+        result += wrapValue(content, "[-", "-]");
+      }
+      beforeIdx += count;
+      if (!(nextPart && nextPart.added)) {
+        flushPending();
+      }
+      continue;
+    }
+
+    for (let i = 0; i < count; i += 1) {
+      flushPending();
+      const token = afterTokens[afterIdx + i];
+      result += token.value;
+      if (token.trailing) {
+        if (nextPart && nextPart.removed && token.trailing.includes("\n")) {
+          pendingTrailing = token.trailing;
+        } else {
+          result += token.trailing;
+        }
+      }
+    }
+
+    beforeIdx += count;
+    afterIdx += count;
+  }
+
+  flushPending();
+  return result;
 };
 
 export const toWordDiff = (patch: string): string => {
-  const files = parseFileDiffs(patch);
-  if (files.length === 0) return patch;
+  const parsedFiles = parseDiff(patch).filter((file) => file.chunks.length > 0);
+  const rawFiles = collectRawDiffs(patch);
 
-  const converted = files.map((file) => {
-    const { before, after } = buildSnapshots(file.hunks);
+  if (!parsedFiles.length || parsedFiles.length !== rawFiles.length) {
+    return patch;
+  }
 
-    // writeFileSync(join(WORKING_DIR_PATH, "a.tsx"), before, "utf8");
-    // writeFileSync(join(WORKING_DIR_PATH, "b.tsx"), after, "utf8");
-
-    const hunkLines = computeWordDiff(before, after);
-    return [...file.headers, ...hunkLines].join("\n");
+  const converted = parsedFiles.map((file, index) => {
+    const headers = rawFiles[index]?.headers ?? [];
+    const hunks = file.chunks.map((chunk) => {
+      const { before, after } = buildChunkSnapshot(chunk);
+      const body = computeWordDiff(before, after);
+      return body ? `${chunk.content}\n${body}` : chunk.content;
+    });
+    const headerText = headers.join("\n");
+    const bodyText = hunks.join("\n");
+    return bodyText ? `${headerText}\n${bodyText}` : headerText;
   });
 
   return converted.join("\n");

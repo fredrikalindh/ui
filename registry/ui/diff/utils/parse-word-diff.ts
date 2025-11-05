@@ -102,48 +102,48 @@ export function mergeOverlappingEdits(tokens: LineSegment[]): LineSegment[] {
 
   while (i < tokens.length) {
     const cur = tokens[i];
-    if (!cur) {
-      i += 1;
-      continue;
-    }
     const nxt = tokens[i + 1];
 
     if (cur.type === "delete" && nxt?.type === "insert") {
       const oldTxt = cur.value;
       const newTxt = nxt.value;
 
-      let p = 0;
+      let prefixLength = 0;
       while (
-        p < oldTxt.length &&
-        p < newTxt.length &&
-        oldTxt[p] === newTxt[p]
+        prefixLength < oldTxt.length &&
+        prefixLength < newTxt.length &&
+        oldTxt[prefixLength] === newTxt[prefixLength]
       ) {
-        p++;
+        prefixLength++;
       }
 
-      let s = 0;
+      let suffixLength = 0;
       while (
-        s < oldTxt.length - p &&
-        s < newTxt.length - p &&
-        oldTxt[oldTxt.length - 1 - s] === newTxt[newTxt.length - 1 - s]
+        suffixLength < oldTxt.length - prefixLength &&
+        suffixLength < newTxt.length - prefixLength &&
+        oldTxt[oldTxt.length - 1 - suffixLength] ===
+          newTxt[newTxt.length - 1 - suffixLength]
       ) {
-        s++;
+        suffixLength++;
       }
 
-      if (p) {
-        mergeSegment(out, { type: "normal", value: oldTxt.slice(0, p) });
+      if (prefixLength) {
+        mergeSegment(out, {
+          type: "normal",
+          value: oldTxt.slice(0, prefixLength),
+        });
       }
 
-      const oldMid = oldTxt.slice(p, oldTxt.length - s);
-      const newMid = newTxt.slice(p, newTxt.length - s);
+      const oldMid = oldTxt.slice(prefixLength, oldTxt.length - suffixLength);
+      const newMid = newTxt.slice(prefixLength, newTxt.length - suffixLength);
 
       if (oldMid) mergeSegment(out, { type: "delete", value: oldMid });
       if (newMid) mergeSegment(out, { type: "insert", value: newMid });
 
-      if (s) {
+      if (suffixLength) {
         mergeSegment(out, {
           type: "normal",
-          value: oldTxt.slice(oldTxt.length - s),
+          value: oldTxt.slice(oldTxt.length - suffixLength),
         });
       }
 
