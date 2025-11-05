@@ -18,7 +18,7 @@ export function DiffViewer({
   options?: Partial<ParseOptions>;
 }) {
   const [file] = options.wordDiff
-    ? parseWordDiff(patch)
+    ? parseWordDiff(patch, options)
     : parseDiff(patch, options);
 
   return (

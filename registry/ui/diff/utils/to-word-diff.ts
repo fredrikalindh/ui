@@ -5,7 +5,7 @@ import { join } from "node:path";
 
 const DIFF_HEADER_PREFIX = "diff --git ";
 const NO_NEWLINE_MARKER = "\\ No newline at end of file";
-
+const WORKING_DIR_PATH = process.cwd();
 interface FileDiff {
   headers: string[];
   hunks: string[];
@@ -120,6 +120,10 @@ export const toWordDiff = (patch: string): string => {
 
   const converted = files.map((file) => {
     const { before, after } = buildSnapshots(file.hunks);
+
+    // writeFileSync(join(WORKING_DIR_PATH, "a.tsx"), before, "utf8");
+    // writeFileSync(join(WORKING_DIR_PATH, "b.tsx"), after, "utf8");
+
     const hunkLines = computeWordDiff(before, after);
     return [...file.headers, ...hunkLines].join("\n");
   });

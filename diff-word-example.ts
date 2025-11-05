@@ -9,6 +9,7 @@ import { cn } from "@workspace/ui/lib/utils";
 import { Check, [-Copy-]{+Copy, ChevronDown+} } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import [-{ useTheme }-]{+* as Collapsible+} from [-"next-themes";-]{+"@radix-ui/react-collapsible";+}
+
 const Root = ({
   className,
   {+children,+}

@@ -56,6 +56,17 @@ const OPTION_PRESETS: { [key: string]: Partial<ParseOptions> } = {
     wordDiff: false,
   },
   wordDiff: {
+    mergeModifiedLines: true,
+    maxDiffDistance: 30,
+    inlineMaxCharEdits: 0,
+    wordDiff: true,
+    maxChangeRatio: 1,
+  },
+  separated: {
+    mergeModifiedLines: true,
+    maxChangeRatio: 0.45,
+    maxDiffDistance: 30,
+    inlineMaxCharEdits: 0,
     wordDiff: true,
   },
   ai: {

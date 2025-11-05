@@ -1,12 +1,9 @@
 import type { File, Hunk, Line, LineSegment, SkipBlock } from "./parse";
 
-interface ParseWordOptions {
+interface ParseOptions {
   inlineMaxCharEdits: number;
+  maxChangeRatio: number;
 }
-
-const defaultOptions: ParseWordOptions = {
-  inlineMaxCharEdits: 4,
-};
 
 type LineKind = "normal" | "insert" | "delete";
 
@@ -146,9 +143,8 @@ export function mergeOverlappingEdits(tokens: LineSegment[]): LineSegment[] {
   return out;
 }
 
-const buildSegments = (line: string, kind: LineKind): LineSegment[] => {
-  const fallbackType: LineSegment["type"] =
-    kind === "insert" ? "insert" : kind === "delete" ? "delete" : "normal";
+const buildSegments = (line: string): LineSegment[] => {
+  const fallbackType = "normal";
   const tokens: LineSegment[] = [];
 
   let lastIndex = 0;
@@ -206,6 +202,48 @@ const buildSegments = (line: string, kind: LineKind): LineSegment[] => {
   return segments;
 };
 
+const calculateChangeRatio = (
+  segments: LineSegment[]
+): {
+  ratio: number;
+  changed: number;
+  hasInsert: boolean;
+  hasDelete: boolean;
+} => {
+  let totalLength = 0;
+  let changedLength = 0;
+  let hasInsert = false;
+  let hasDelete = false;
+
+  for (const segment of segments) {
+    const length = segment.value.length;
+    totalLength += length;
+
+    if (segment.type === "insert") {
+      changedLength += length;
+      hasInsert = true;
+    } else if (segment.type === "delete") {
+      changedLength += length;
+      hasDelete = true;
+    }
+  }
+
+  const ratio = totalLength === 0 ? 0 : changedLength / totalLength;
+
+  return { ratio, changed: changedLength, hasInsert, hasDelete };
+};
+
+const buildLineVersion = (
+  segments: LineSegment[],
+  variant: "old" | "new"
+): string =>
+  segments
+    .filter((segment) =>
+      variant === "old" ? segment.type !== "insert" : segment.type !== "delete"
+    )
+    .map((segment) => segment.value)
+    .join("");
+
 const stripWordDiffMarkers = (line: string): string =>
   line
     .replace(/\{\+/g, "")
@@ -254,13 +292,13 @@ const parseHunkHeader = (
   };
 };
 
+/**
+ * Parses diffs output from `git diff --word-diff` into a list of files and hunks.
+ */
 export const parseWordDiff = (
   diff: string,
-  options?: Partial<ParseWordOptions>
+  options?: Partial<ParseOptions>
 ): File[] => {
-  const opts = { ...defaultOptions, ...options };
-  void opts;
-
   const files: File[] = [];
 
   const normalized = diff.replace(/\r\n?/g, "\n");
@@ -436,7 +474,44 @@ export const parseWordDiff = (
       oldCursor += 1;
       oldLineCount += 1;
     } else {
-      const segments = buildSegments(line, kind);
+      const segments = buildSegments(line);
+      const changeStats = calculateChangeRatio(segments);
+
+      if (
+        changeStats.hasInsert &&
+        changeStats.hasDelete &&
+        options?.maxChangeRatio &&
+        changeStats.ratio > options?.maxChangeRatio
+      ) {
+        const oldLineValue = buildLineVersion(segments, "old");
+        const newLineValue = buildLineVersion(segments, "new");
+
+        if (oldLineValue) {
+          const deleteLine: Line = {
+            type: "delete",
+            lineNumber: oldCursor,
+            isDelete: true,
+            content: [{ type: "normal", value: oldLineValue }],
+          };
+          currentHunkLines.push(deleteLine);
+          oldCursor += 1;
+          oldLineCount += 1;
+        }
+
+        if (newLineValue) {
+          const insertLine: Line = {
+            type: "insert",
+            lineNumber: newCursor,
+            isInsert: true,
+            content: [{ type: "normal", value: newLineValue }],
+          };
+          currentHunkLines.push(insertLine);
+          newCursor += 1;
+          newLineCount += 1;
+        }
+
+        continue;
+      }
 
       const normalLine: Line = {
         type: "normal",
