@@ -1,7 +1,7 @@
-export const DIFF_WORD = `diff --git a/./registry/blocks/diff-viewer/before.tsx b/./registry/blocks/diff-viewer/after.tsx
+export const DIFF_WORD = `diff --git a/./before.tsx b/./after.tsx
 index f73b4e9..66e0cfe 100644
---- a/./registry/blocks/diff-viewer/before.tsx
-+++ b/./registry/blocks/diff-viewer/after.tsx
+--- a/./before.tsx
++++ b/./after.tsx
 @@ -1,17 +1,25 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { Fade } from "./blur-fade/blur-fade";

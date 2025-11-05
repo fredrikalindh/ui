@@ -79,15 +79,15 @@ const mergeToken = (tokens: LineSegment[], token: LineSegment): void => {
   tokens.push({ ...token });
 };
 
-/**
- * Git `--word-diff=porcelain` delivers records like:
- *   "  Copy"      (unchanged, prefixed by space)
- *   "- Copy"      (deletion, prefixed by "- ")
- *   "+ Copy,Chevron" (insertion, prefixed by "+ ")
- *
- * The caller should pre-parse those into LineSegment[] and then feed
- * them to this function.
- */
+const normalizePath = (path: string): string => {
+  const trimmed = path.trim();
+  if (!trimmed || trimmed === "/dev/null") return "";
+  if (trimmed.startsWith("a/") || trimmed.startsWith("b/")) {
+    return trimmed.slice(2);
+  }
+  return trimmed;
+};
+
 export function mergeOverlappingEdits(tokens: LineSegment[]): LineSegment[] {
   const out: LineSegment[] = [];
   let i = 0;
@@ -206,13 +206,20 @@ const buildSegments = (line: string, kind: LineKind): LineSegment[] => {
   return segments;
 };
 
+const stripWordDiffMarkers = (line: string): string =>
+  line
+    .replace(/\{\+/g, "")
+    .replace(/\+\}/g, "")
+    .replace(/\[-/g, "")
+    .replace(/-\]/g, "");
+
 interface FileBuilder extends Omit<File, "hunks"> {
   hunks: Hunk[];
 }
 
 const createFile = (oldPath = "", newPath = ""): FileBuilder => ({
-  oldPath,
-  newPath,
+  oldPath: normalizePath(oldPath),
+  newPath: normalizePath(newPath),
   type: "modify",
   oldRevision: "",
   newRevision: "",
@@ -329,12 +336,12 @@ export const parseWordDiff = (
     }
 
     if (line.startsWith("--- ")) {
-      currentFile.oldPath = line.slice(4);
+      currentFile.oldPath = normalizePath(line.slice(4));
       continue;
     }
 
     if (line.startsWith("+++ ")) {
-      currentFile.newPath = line.slice(4);
+      currentFile.newPath = normalizePath(line.slice(4));
       continue;
     }
 
@@ -347,6 +354,30 @@ export const parseWordDiff = (
     if (line.startsWith("deleted file mode ")) {
       currentFile.type = "delete";
       currentFile.oldMode = line.slice("deleted file mode ".length);
+      continue;
+    }
+
+    if (line.startsWith("rename from ")) {
+      currentFile.type = "rename";
+      currentFile.oldPath = normalizePath(line.slice("rename from ".length));
+      continue;
+    }
+
+    if (line.startsWith("rename to")) {
+      currentFile.type = "rename";
+      currentFile.newPath = normalizePath(line.slice("rename to".length));
+      continue;
+    }
+
+    if (line.startsWith("copy from ")) {
+      currentFile.type = "copy";
+      currentFile.oldPath = normalizePath(line.slice("copy from ".length));
+      continue;
+    }
+
+    if (line.startsWith("copy to")) {
+      currentFile.type = "copy";
+      currentFile.newPath = normalizePath(line.slice("copy to".length));
       continue;
     }
 
@@ -379,9 +410,10 @@ export const parseWordDiff = (
     }
 
     const kind = classifyLine(line);
-    const segments = buildSegments(line, kind);
 
     if (kind === "insert") {
+      const value = stripWordDiffMarkers(line);
+      const segments: LineSegment[] = [{ type: "normal", value }];
       const insertLine: Line = {
         type: "insert",
         lineNumber: newCursor,
@@ -392,6 +424,8 @@ export const parseWordDiff = (
       newCursor += 1;
       newLineCount += 1;
     } else if (kind === "delete") {
+      const value = stripWordDiffMarkers(line);
+      const segments: LineSegment[] = [{ type: "normal", value }];
       const deleteLine: Line = {
         type: "delete",
         lineNumber: oldCursor,
@@ -402,6 +436,8 @@ export const parseWordDiff = (
       oldCursor += 1;
       oldLineCount += 1;
     } else {
+      const segments = buildSegments(line, kind);
+
       const normalLine: Line = {
         type: "normal",
         isNormal: true,

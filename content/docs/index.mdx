@@ -171,4 +171,25 @@ if (!charDiff.exceededLimit) {
 ```
 </Preview>
 
+
+
+<Preview
+  id="wordDiff"
+  label="Word diff"
+  description="Using `git diff --word-diff` to make it better."
+  src="/previews/diff-viewer/wordDiff"
+>
+
+### A much better solution
+
+Git has another mode for generating diffs called `word-diff`. It does what we've so far tried to do based on the default Github diff which is using Myer's algorithm. Unfortunately, Github doesn't support this mode yet.
+
+The output looks like this:
+```diff
+import { Check, [-Copy-]{+Copy, ChevronDown+} } from "lucide-react";
+```
+
+Each inserted word is wrapped in `{+` and `+}` and each deleted word is wrapped in `[-` and `-]`. So we no longer need to guess which lines are modified, but we still need to merge adjacent insertions and deletions on each line using the same heuristics as before.
+</Preview>
+
 The focus of this project has been to experiment with different heuristics for merging modified lines to use for [asi.review](https://asi.review). It's not optimized for performance.

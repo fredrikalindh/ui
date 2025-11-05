@@ -67,6 +67,7 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
           maxChangeRatio,
           maxDiffDistance,
           inlineMaxCharEdits,
+          wordDiff: initialOptions?.wordDiff ?? false,
         }}
       />
 

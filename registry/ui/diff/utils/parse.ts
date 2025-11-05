@@ -38,6 +38,7 @@ export interface ParseOptions {
   maxChangeRatio: number;
   mergeModifiedLines: boolean;
   inlineMaxCharEdits: number;
+  wordDiff: boolean;
 }
 
 const calculateChangeRatio = (a: string, b: string): number => {

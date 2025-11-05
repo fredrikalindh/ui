@@ -8,8 +8,7 @@ import {
 } from "@/registry/ui/collapsible-card";
 
 import { parseDiff, ParseOptions } from "@/registry/ui/diff/utils/parse";
-import { parseWordDiff } from "@/registry/ui/diff/utils/parse-word";
-import { DIFF_WORD } from "@/diff-word-diff";
+import { parseWordDiff } from "@/registry/ui/diff/utils/parse-word-diff";
 
 export function DiffViewer({
   patch,
@@ -18,8 +17,9 @@ export function DiffViewer({
   patch: string;
   options?: Partial<ParseOptions>;
 }) {
-  // const [file] = parseDiff(DIFF_WORD, options);
-  const [file] = parseWordDiff(DIFF_WORD, options);
+  const [file] = options.wordDiff
+    ? parseWordDiff(patch)
+    : parseDiff(patch, options);
 
   return (
     <CollapsibleCard

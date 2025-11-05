@@ -10,6 +10,7 @@ import {
 import { DiffOptionsPreview } from "@/registry/blocks/diff-viewer/preview";
 import { EXAMPLE_DIFF } from "@/registry/blocks/diff-viewer/data";
 import { ParseOptions } from "@/registry/ui/diff/utils";
+import { DIFF_WORD } from "@/diff-word";
 
 const OPTION_PRESETS: { [key: string]: Partial<ParseOptions> } = {
   github: {
@@ -17,35 +18,44 @@ const OPTION_PRESETS: { [key: string]: Partial<ParseOptions> } = {
     maxChangeRatio: 0.45,
     maxDiffDistance: 1,
     inlineMaxCharEdits: 0,
+    wordDiff: false,
   },
   merged: {
     mergeModifiedLines: true,
     maxDiffDistance: 1,
     maxChangeRatio: 0.45,
     inlineMaxCharEdits: 0,
+    wordDiff: false,
   },
   dissimilarRaw: {
     mergeModifiedLines: true,
     maxChangeRatio: 1,
     maxDiffDistance: 1,
     inlineMaxCharEdits: 0,
+    wordDiff: false,
   },
   dissimilar: {
     mergeModifiedLines: true,
     maxChangeRatio: 0.45,
     maxDiffDistance: 1,
     inlineMaxCharEdits: 0,
+    wordDiff: false,
   },
   overview: {
     mergeModifiedLines: true,
     maxChangeRatio: 0.45,
     maxDiffDistance: 30,
+    wordDiff: false,
   },
   complexMerged: {
     mergeModifiedLines: true,
     maxChangeRatio: 0.45,
     maxDiffDistance: 30,
     inlineMaxCharEdits: 0,
+    wordDiff: false,
+  },
+  wordDiff: {
+    wordDiff: true,
   },
 };
 
@@ -65,7 +75,10 @@ function DiffDocsPaneRenderer() {
 
   return (
     <div className="h-full w-full bg-muted p-2 lg:px-6">
-      <DiffOptionsPreview patch={EXAMPLE_DIFF} initialOptions={options} />
+      <DiffOptionsPreview
+        patch={options?.wordDiff ? DIFF_WORD : EXAMPLE_DIFF}
+        initialOptions={options}
+      />
     </div>
   );
 }

@@ -1,71 +1,31 @@
-export const EXAMPLE_DIFF = `diff --git a/./registry/blocks/diff-viewer/before.tsx b/./registry/blocks/diff-viewer/after.tsx
-index f73b4e9..d33d116 100644
---- a/./registry/blocks/diff-viewer/before.tsx
-+++ b/./registry/blocks/diff-viewer/after.tsx
-@@ -1,17 +1,26 @@
- import React, { useLayoutEffect, useRef, useState } from "react";
- import { Fade } from "./blur-fade/blur-fade";
- import { cn } from "@workspace/ui/lib/utils";
--import { Check, Copy } from "lucide-react";
-+import { Check, Copy, ChevronDown } from "lucide-react";
- import { Button } from "@workspace/ui/components/button";
-+import * as Collapsible from "@radix-ui/react-collapsible";
- 
- const Root = ({
-   className,
-+  children,
-   ...props
- }: React.ComponentProps<"div">) => {
-   return (
--    <div
--      className={cn(
--        "relative text-[13p] rounded-xl overflow-hidden border bg-code",
--        className
--      )}
--      {...props}
--    />
-+    <Collapsible.Root {...props}>
-+      <div
-+        className={cn(
-+          "relative text-[13px] rounded-xl overflow-hidden border bg-code min-h-16",
-+          className
-+        )}
-+      >
-+        {children}
-+      </div>
-+    </Collapsible.Root>
-   );
- };
-`;
-
-// export const EXAMPLE_DIFF = `diff --git a/apps/web/components/overflow-card.tsx b/apps/web/components/overflow-card.tsx
-// index fa4d9c4..8d980f1 100644
-// --- a/apps/web/components/overflow-card.tsx
-// +++ b/apps/web/components/overflow-card.tsx
-// @@ -1,40 +1,55 @@
+// export const EXAMPLE_DIFF = `diff --git a/./registry/blocks/diff-viewer/before.tsx b/./registry/blocks/diff-viewer/after.tsx
+// index f73b4e9..d33d116 100644
+// --- a/./registry/blocks/diff-viewer/before.tsx
+// +++ b/./registry/blocks/diff-viewer/after.tsx
+// @@ -1,17 +1,26 @@
 //  import React, { useLayoutEffect, useRef, useState } from "react";
 //  import { Fade } from "./blur-fade/blur-fade";
 //  import { cn } from "@workspace/ui/lib/utils";
 // -import { Check, Copy } from "lucide-react";
 // +import { Check, Copy, ChevronDown } from "lucide-react";
 //  import { Button } from "@workspace/ui/components/button";
-// -import { useTheme } from "next-themes";
 // +import * as Collapsible from "@radix-ui/react-collapsible";
 
 //  const Root = ({
 //    className,
 // +  children,
-// +  defaultOpen = true,
 //    ...props
-// -}: React.ComponentProps<"div">) => {
-// +}: React.ComponentProps<"div"> & {
-// +  defaultOpen?: boolean;
-// +}) => {
-
+//  }: React.ComponentProps<"div">) => {
 //    return (
-// +    <Collapsible.Root defaultOpen={defaultOpen}>
+// -    <div
+// -      className={cn(
+// -        "relative text-[13p] rounded-xl overflow-hidden border bg-code",
+// -        className
+// -      )}
+// -      {...props}
+// -    />
+// +    <Collapsible.Root {...props}>
 // +      <div
-// +        {...props}
 // +        className={cn(
 // +          "relative text-[13px] rounded-xl overflow-hidden border bg-code min-h-16",
 // +          className
@@ -74,47 +34,87 @@ index f73b4e9..d33d116 100644
 // +        {children}
 // +      </div>
 // +    </Collapsible.Root>
-// +  );
-// +};
-// +
-// +const Header: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
-// +  className,
-// +  children,
-// +  ...props
-// +}) => (
-// +  <Collapsible.Trigger asChild>
-//      <div
-//        {...props}
-//        className={cn(
-// -        "relative text-[13p] rounded-xl overflow-hidden border bg-code",
-// +        "absolute top-3 inset-x-4 z-20",
-// +        "flex items-center gap-2 justify-between",
-//          className
-//        )}
-//      >
-// +      <Button variant="ghost" size="icon" className="h-8 w-8">
-// +        <ChevronDown className="h-4 w-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
-// +      </Button>
-// +      {children}
-//      </div>
-// -  );
-// -};
-// -
-// -const Header: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
-// -  className,
-// -  ...props
-// -}) => (
-// -  <div
-// -    {...props}
-// -    className={cn(
-// -      "absolute top-3 inset-x-4 z-20",
-// -      "flex items-center gap-2 justify-between",
-// -      className
-// -    )}
-// -  />
-// +  </Collapsible.Trigger>
-//  );
-//  `;
+//    );
+//  };
+// `;
+
+export const EXAMPLE_DIFF = `diff --git a/apps/web/components/overflow-card.tsx b/apps/web/components/overflow-card.tsx
+index fa4d9c4..8d980f1 100644
+--- a/apps/web/components/overflow-card.tsx
++++ b/apps/web/components/overflow-card.tsx
+@@ -1,40 +1,55 @@
+ import React, { useLayoutEffect, useRef, useState } from "react";
+ import { Fade } from "./blur-fade/blur-fade";
+ import { cn } from "@workspace/ui/lib/utils";
+-import { Check, Copy } from "lucide-react";
++import { Check, Copy, ChevronDown } from "lucide-react";
+ import { Button } from "@workspace/ui/components/button";
+-import { useTheme } from "next-themes";
++import * as Collapsible from "@radix-ui/react-collapsible";
+
+ const Root = ({
+   className,
++  children,
++  defaultOpen = true,
+   ...props
+-}: React.ComponentProps<"div">) => {
++}: React.ComponentProps<"div"> & {
++  defaultOpen?: boolean;
++}) => {
+
+   return (
++    <Collapsible.Root defaultOpen={defaultOpen}>
++      <div
++        {...props}
++        className={cn(
++          "relative text-[13px] rounded-xl overflow-hidden border bg-code min-h-16",
++          className
++        )}
++      >
++        {children}
++      </div>
++    </Collapsible.Root>
++  );
++};
++
++const Header: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
++  className,
++  children,
++  ...props
++}) => (
++  <Collapsible.Trigger asChild>
+     <div
+       {...props}
+       className={cn(
+-        "relative text-[13p] rounded-xl overflow-hidden border bg-code",
++        "absolute top-3 inset-x-4 z-20",
++        "flex items-center gap-2 justify-between",
+         className
+       )}
+     >
++      <Button variant="ghost" size="icon" className="h-8 w-8">
++        <ChevronDown className="h-4 w-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
++      </Button>
++      {children}
+     </div>
+-  );
+-};
+-
+-const Header: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
+-  className,
+-  ...props
+-}) => (
+-  <div
+-    {...props}
+-    className={cn(
+-      "absolute top-3 inset-x-4 z-20",
+-      "flex items-center gap-2 justify-between",
+-      className
+-    )}
+-  />
++  </Collapsible.Trigger>
+ );
+ `;
 
 export const SIMPLE_DIFF = `diff --git a/components/input.tsx b/components/input.tsx
 index 3facda6..82485f0 100644
