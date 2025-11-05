@@ -11,6 +11,8 @@ const HUNK_HEADER_REGEX = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)/;
 
 const TOKEN_REGEX = /\{\+([\s\S]*?)\+\}|\[-([\s\S]*?)-\]/g;
 
+const DIFF_HEADER_REGEX = /^diff --git (.+?) (.+)$/;
+
 const extractHunkContext = (header: string): string =>
   HUNK_HEADER_REGEX.exec(header)?.[5]?.trim() ?? "";
 
@@ -83,6 +85,20 @@ const normalizePath = (path: string): string => {
     return trimmed.slice(2);
   }
   return trimmed;
+};
+
+const parseDiffHeaderPaths = (
+  line: string
+): { oldPath: string; newPath: string } => {
+  const match = DIFF_HEADER_REGEX.exec(line.trim());
+  if (!match) {
+    return { oldPath: "", newPath: "" };
+  }
+
+  return {
+    oldPath: match[1],
+    newPath: match[2],
+  };
 };
 
 export function mergeOverlappingEdits(tokens: LineSegment[]): LineSegment[] {
@@ -209,11 +225,15 @@ const calculateChangeRatio = (
   changed: number;
   hasInsert: boolean;
   hasDelete: boolean;
+  insertValue: string;
+  deleteValue: string;
 } => {
   let totalLength = 0;
   let changedLength = 0;
   let hasInsert = false;
   let hasDelete = false;
+  let insertValue = "";
+  let deleteValue = "";
 
   for (const segment of segments) {
     const length = segment.value.length;
@@ -222,15 +242,27 @@ const calculateChangeRatio = (
     if (segment.type === "insert") {
       changedLength += length;
       hasInsert = true;
+      insertValue += segment.value;
     } else if (segment.type === "delete") {
       changedLength += length;
       hasDelete = true;
+      deleteValue += segment.value;
+    } else {
+      insertValue += segment.value;
+      deleteValue += segment.value;
     }
   }
 
   const ratio = totalLength === 0 ? 0 : changedLength / totalLength;
 
-  return { ratio, changed: changedLength, hasInsert, hasDelete };
+  return {
+    ratio,
+    changed: changedLength,
+    hasInsert,
+    hasDelete,
+    insertValue,
+    deleteValue,
+  };
 };
 
 const buildLineVersion = (
@@ -303,8 +335,16 @@ export const parseWordDiff = (
 
   const normalized = diff.replace(/\r\n?/g, "\n");
   const lines = normalized.split("\n");
+  const linesLen = lines.length;
+
+  const STAT_START = "start" as const;
+  const STAT_HEADER = "header" as const;
+  const STAT_HUNK = "hunk" as const;
+  type ParseState = typeof STAT_START | typeof STAT_HEADER | typeof STAT_HUNK;
+  let state: ParseState = STAT_START;
 
   let currentFile: FileBuilder | null = null;
+  let pendingFileType: FileBuilder["type"] | null = null;
   let currentHunk: Hunk | null = null;
   let currentHunkLines: Line[] = [];
   let oldCursor = 0;
@@ -332,6 +372,8 @@ export const parseWordDiff = (
     if (!currentFile) return;
     flushHunk();
 
+    currentFile.type = pendingFileType ?? currentFile.type ?? "modify";
+
     const hunksWithSkips = insertSkipBlocks(currentFile.hunks);
     files.push({
       ...currentFile,
@@ -339,141 +381,253 @@ export const parseWordDiff = (
     });
 
     currentFile = null;
+    pendingFileType = null;
+    state = STAT_START;
   };
 
-  for (const rawLine of lines) {
-    const line = rawLine;
+  let i = 0;
+  while (i < linesLen) {
+    const line = lines[i];
 
     if (line.startsWith("diff --git ")) {
       flushFile();
 
-      const match = /^diff --git a\/(.+?) b\/(.+)$/.exec(line);
-      if (match) {
-        currentFile = createFile(`a/${match[1]}`, `b/${match[2]}`);
-      } else {
-        currentFile = createFile();
-      }
+      const paths = parseDiffHeaderPaths(line);
+      currentFile = createFile(paths.oldPath, paths.newPath);
+      pendingFileType = null;
+      state = STAT_HEADER;
+      i += 1;
       continue;
     }
 
     if (!currentFile) {
+      i += 1;
       continue;
     }
 
-    if (line.startsWith("index ")) {
-      const match = /^index ([0-9a-f]+)\.\.([0-9a-f]+)(?: (\d+))?/.exec(line);
-      if (match) {
-        currentFile.oldRevision = match[1];
-        currentFile.newRevision = match[2];
-        if (match[3]) {
-          currentFile.oldMode = match[3];
-          currentFile.newMode = match[3];
-        }
+    if (line.startsWith("Binary ")) {
+      currentFile.isBinary = true;
+      if (line.includes("/dev/null and")) {
+        pendingFileType = "add";
+      } else if (line.includes("and /dev/null")) {
+        pendingFileType = "delete";
       }
+      currentFile.type = pendingFileType ?? currentFile.type ?? "modify";
+      flushFile();
+      i += 1;
       continue;
     }
 
-    if (line.startsWith("--- ")) {
-      currentFile.oldPath = normalizePath(line.slice(4));
+    if (state === STAT_HEADER) {
+      if (!line.trim()) {
+        i += 1;
+        continue;
+      }
+
+      if (line.startsWith("diff --git ")) {
+        flushFile();
+        continue;
+      }
+
+      if (line.startsWith("index ")) {
+        const match = /^index ([0-9a-f]+)\.\.([0-9a-f]+)(?: (\d+))?/.exec(line);
+        if (match) {
+          currentFile.oldRevision = match[1];
+          currentFile.newRevision = match[2];
+          if (match[3]) {
+            currentFile.oldMode = match[3];
+            currentFile.newMode = match[3];
+          }
+        }
+        i += 1;
+        continue;
+      }
+
+      if (line.startsWith("similarity index ")) {
+        const match = /^similarity index (\d+)%/.exec(line);
+        if (match) {
+          currentFile.similarity = Number(match[1]);
+        }
+        i += 1;
+        continue;
+      }
+
+      if (line.startsWith("new file mode ")) {
+        pendingFileType = "add";
+        currentFile.newMode = line.slice("new file mode ".length);
+        i += 1;
+        continue;
+      }
+
+      if (line.startsWith("deleted file mode ")) {
+        pendingFileType = "delete";
+        currentFile.oldMode = line.slice("deleted file mode ".length);
+        i += 1;
+        continue;
+      }
+
+      if (line.startsWith("old mode ")) {
+        currentFile.oldMode = line.slice("old mode ".length);
+        i += 1;
+        continue;
+      }
+
+      if (line.startsWith("new mode ")) {
+        currentFile.newMode = line.slice("new mode ".length);
+        i += 1;
+        continue;
+      }
+
+      if (line.startsWith("rename from ")) {
+        pendingFileType = "rename";
+        currentFile.oldPath = normalizePath(line.slice("rename from ".length));
+        i += 1;
+        continue;
+      }
+
+      if (line.startsWith("rename to ")) {
+        pendingFileType = "rename";
+        currentFile.newPath = normalizePath(line.slice("rename to ".length));
+        i += 1;
+        continue;
+      }
+
+      if (line.startsWith("copy from ")) {
+        pendingFileType = "copy";
+        currentFile.oldPath = normalizePath(line.slice("copy from ".length));
+        i += 1;
+        continue;
+      }
+
+      if (line.startsWith("copy to ")) {
+        pendingFileType = "copy";
+        currentFile.newPath = normalizePath(line.slice("copy to ".length));
+        i += 1;
+        continue;
+      }
+
+      if (line.startsWith("--- ")) {
+        const oldPathRaw = line.slice(4);
+        const nextLine = lines[i + 1];
+        let newPathRaw = "";
+        if (nextLine?.startsWith("+++ ")) {
+          newPathRaw = nextLine.slice(4);
+          i += 1;
+        }
+
+        const normalizedOldPath = normalizePath(oldPathRaw);
+        const normalizedNewPath = normalizePath(newPathRaw);
+
+        const oldIsDevNull = oldPathRaw === "/dev/null";
+        const newIsDevNull = newPathRaw === "/dev/null";
+
+        if (oldIsDevNull && !newIsDevNull) {
+          pendingFileType = pendingFileType ?? "add";
+        } else if (!oldIsDevNull && newIsDevNull) {
+          pendingFileType = pendingFileType ?? "delete";
+        } else if (!pendingFileType) {
+          pendingFileType = currentFile.type ?? "modify";
+        }
+
+        if (oldIsDevNull) {
+          currentFile.oldPath = "";
+        } else if (normalizedOldPath) {
+          currentFile.oldPath = normalizedOldPath;
+        }
+
+        if (newIsDevNull) {
+          currentFile.newPath = "";
+        } else if (normalizedNewPath) {
+          currentFile.newPath = normalizedNewPath;
+        }
+
+        currentFile.type = pendingFileType ?? "modify";
+        state = STAT_HUNK;
+        i += 1;
+        continue;
+      }
+
+      if (line.startsWith("@@ ")) {
+        currentFile.type = pendingFileType ?? currentFile.type ?? "modify";
+        state = STAT_HUNK;
+        continue;
+      }
+
+      i += 1;
       continue;
     }
 
-    if (line.startsWith("+++ ")) {
-      currentFile.newPath = normalizePath(line.slice(4));
-      continue;
-    }
+    if (state === STAT_HUNK) {
+      if (line.startsWith("diff --git ")) {
+        flushFile();
+        continue;
+      }
 
-    if (line.startsWith("new file mode ")) {
-      currentFile.type = "add";
-      currentFile.newMode = line.slice("new file mode ".length);
-      continue;
-    }
+      if (line.startsWith("@@ ")) {
+        flushHunk();
+        const header = line;
+        const hunkMeta = parseHunkHeader(header);
 
-    if (line.startsWith("deleted file mode ")) {
-      currentFile.type = "delete";
-      currentFile.oldMode = line.slice("deleted file mode ".length);
-      continue;
-    }
+        currentHunk = {
+          ...hunkMeta,
+          lines: [],
+        };
 
-    if (line.startsWith("rename from ")) {
-      currentFile.type = "rename";
-      currentFile.oldPath = normalizePath(line.slice("rename from ".length));
-      continue;
-    }
+        currentHunkLines = [];
+        oldCursor = hunkMeta.oldStart;
+        newCursor = hunkMeta.newStart;
+        oldLineCount = 0;
+        newLineCount = 0;
+        i += 1;
+        continue;
+      }
 
-    if (line.startsWith("rename to")) {
-      currentFile.type = "rename";
-      currentFile.newPath = normalizePath(line.slice("rename to".length));
-      continue;
-    }
+      if (!currentHunk) {
+        i += 1;
+        continue;
+      }
 
-    if (line.startsWith("copy from ")) {
-      currentFile.type = "copy";
-      currentFile.oldPath = normalizePath(line.slice("copy from ".length));
-      continue;
-    }
+      if (line.startsWith("\\ No newline at end of file")) {
+        currentFile.oldEndingNewLine = false;
+        currentFile.newEndingNewLine = false;
+        i += 1;
+        continue;
+      }
 
-    if (line.startsWith("copy to")) {
-      currentFile.type = "copy";
-      currentFile.newPath = normalizePath(line.slice("copy to".length));
-      continue;
-    }
+      const kind = classifyLine(line);
 
-    if (line.startsWith("@@ ")) {
-      flushHunk();
-      const header = line;
-      const hunkMeta = parseHunkHeader(header);
+      if (kind === "insert") {
+        const value = stripWordDiffMarkers(line);
+        const segments: LineSegment[] = [{ type: "normal", value }];
+        const insertLine: Line = {
+          type: "insert",
+          lineNumber: newCursor,
+          isInsert: true,
+          content: segments,
+        };
+        currentHunkLines.push(insertLine);
+        newCursor += 1;
+        newLineCount += 1;
+        i += 1;
+        continue;
+      }
 
-      currentHunk = {
-        ...hunkMeta,
-        lines: [],
-      };
+      if (kind === "delete") {
+        const value = stripWordDiffMarkers(line);
+        const segments: LineSegment[] = [{ type: "normal", value }];
+        const deleteLine: Line = {
+          type: "delete",
+          lineNumber: oldCursor,
+          isDelete: true,
+          content: segments,
+        };
+        currentHunkLines.push(deleteLine);
+        oldCursor += 1;
+        oldLineCount += 1;
+        i += 1;
+        continue;
+      }
 
-      currentHunkLines = [];
-      oldCursor = hunkMeta.oldStart;
-      newCursor = hunkMeta.newStart;
-      oldLineCount = 0;
-      newLineCount = 0;
-      continue;
-    }
-
-    if (!currentHunk) {
-      continue;
-    }
-
-    if (line.startsWith("\\ No newline at end of file")) {
-      currentFile.oldEndingNewLine = false;
-      currentFile.newEndingNewLine = false;
-      continue;
-    }
-
-    const kind = classifyLine(line);
-
-    if (kind === "insert") {
-      const value = stripWordDiffMarkers(line);
-      const segments: LineSegment[] = [{ type: "normal", value }];
-      const insertLine: Line = {
-        type: "insert",
-        lineNumber: newCursor,
-        isInsert: true,
-        content: segments,
-      };
-      currentHunkLines.push(insertLine);
-      newCursor += 1;
-      newLineCount += 1;
-    } else if (kind === "delete") {
-      const value = stripWordDiffMarkers(line);
-      const segments: LineSegment[] = [{ type: "normal", value }];
-      const deleteLine: Line = {
-        type: "delete",
-        lineNumber: oldCursor,
-        isDelete: true,
-        content: segments,
-      };
-      currentHunkLines.push(deleteLine);
-      oldCursor += 1;
-      oldLineCount += 1;
-    } else {
       const segments = buildSegments(line);
       const changeStats = calculateChangeRatio(segments);
 
@@ -483,33 +637,31 @@ export const parseWordDiff = (
         options?.maxChangeRatio &&
         changeStats.ratio > options?.maxChangeRatio
       ) {
-        const oldLineValue = buildLineVersion(segments, "old");
-        const newLineValue = buildLineVersion(segments, "new");
-
-        if (oldLineValue) {
+        if (changeStats.deleteValue) {
           const deleteLine: Line = {
             type: "delete",
             lineNumber: oldCursor,
             isDelete: true,
-            content: [{ type: "normal", value: oldLineValue }],
+            content: [{ type: "normal", value: changeStats.deleteValue }],
           };
           currentHunkLines.push(deleteLine);
           oldCursor += 1;
           oldLineCount += 1;
         }
 
-        if (newLineValue) {
+        if (changeStats.insertValue) {
           const insertLine: Line = {
             type: "insert",
             lineNumber: newCursor,
             isInsert: true,
-            content: [{ type: "normal", value: newLineValue }],
+            content: [{ type: "normal", value: changeStats.insertValue }],
           };
           currentHunkLines.push(insertLine);
           newCursor += 1;
           newLineCount += 1;
         }
 
+        i += 1;
         continue;
       }
 
@@ -525,7 +677,11 @@ export const parseWordDiff = (
       newCursor += 1;
       oldLineCount += 1;
       newLineCount += 1;
+      i += 1;
+      continue;
     }
+
+    i += 1;
   }
 
   flushFile();
