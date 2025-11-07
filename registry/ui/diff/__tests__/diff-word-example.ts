@@ -2,7 +2,7 @@ export const DIFF_WORD_EXAMPLE = `diff --git a/apps/web/components/overflow-card
 index fa4d9c4..8d980f1 100644
 --- a/apps/web/components/overflow-card.tsx
 +++ b/apps/web/components/overflow-card.tsx
-@@ -1,36 +1,51 @@
+@@ -1,38 +1,53 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { Fade } from "./blur-fade/blur-fade";
 import { cn } from "@workspace/ui/lib/utils";
@@ -18,6 +18,7 @@ const Root = ({
 }: [-React.ComponentProps<"div">)-]{+React.ComponentProps<"div"> & {+}
 {+  defaultOpen?: boolean;+}
 {+})+} => {
+
   return (
     {+<Collapsible.Root defaultOpen={defaultOpen}>+}
       <div
@@ -32,7 +33,7 @@ const Root = ({
     {+</Collapsible.Root>+}
   );
 };
-
+{++}
 const Header: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   className,
   {+children,+}

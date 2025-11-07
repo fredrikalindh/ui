@@ -343,8 +343,6 @@ export const parseWordDiff = (
     flushHunk();
 
     currentFile.type = currentFileType ?? currentFile.type ?? "modify";
-    currentFile.oldPath = currentFile.oldPath;
-    currentFile.newPath = currentFile.newPath;
 
     const hunksWithSkips = insertSkipBlocks(currentFile.hunks);
     files.push({
