@@ -13,7 +13,7 @@ export default function Home() {
         </div>
         <ThemeToggle />
       </header>
-      <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full">
+      <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full gap-6">
         <ExperimentCard
           name="Unified Diff Viewer"
           date="2025-01-01"
@@ -25,6 +25,14 @@ export default function Home() {
           }}
           url="/docs"
           buttonLabel="View Demo"
+          theme="light"
+          textPosition="top"
+        />
+        <ExperimentCard
+          name="Project Overview"
+          date="2025-11-12"
+          url="/projects"
+          buttonLabel="View Projects"
           theme="light"
           textPosition="top"
         />
