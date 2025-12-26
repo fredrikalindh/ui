@@ -1,68 +1,70 @@
 "use client";
 
-import { useEffect, useRef, useState, ReactNode } from "react";
+import {
+  ReactNode,
+  Children,
+  isValidElement,
+  cloneElement,
+  ReactElement,
+} from "react";
+import { useBreakpoint } from "@/hooks/use-breakpoint";
 
 interface MasonryGridProps {
-  children: ReactNode[];
+  children: ReactNode;
   gap?: number;
-  columnBreakpoints?: {
-    default: number;
-    [breakpoint: number]: number;
-  };
+  className?: string;
+}
+
+// Reorder children so CSS columns (top-to-bottom) displays them in left-to-right order
+function reorderForColumns<T>(items: T[], columnCount: number): T[] {
+  if (columnCount <= 1) return items;
+
+  const itemsPerColumn = Math.ceil(items.length / columnCount);
+  const reordered: T[] = new Array(items.length);
+
+  items.forEach((item, originalIndex) => {
+    const targetColumn = originalIndex % columnCount;
+    const targetRow = Math.floor(originalIndex / columnCount);
+    const newIndex = targetColumn * itemsPerColumn + targetRow;
+    reordered[newIndex] = item;
+  });
+
+  return reordered.filter((item) => item !== undefined);
 }
 
 export function MasonryGrid({
   children,
   gap = 8,
-  columnBreakpoints = { default: 3, 1024: 2, 640: 1 },
+  className,
 }: MasonryGridProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [columnCount, setColumnCount] = useState(columnBreakpoints.default);
+  const breakpoint = useBreakpoint();
 
-  // Determine column count based on container width
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+  // Map breakpoints to column counts (matches Tailwind classes below)
+  const columnCount = breakpoint === "sm" ? 1 : breakpoint === "md" ? 2 : 3;
 
-    const updateColumns = () => {
-      const width = container.offsetWidth;
-      const breakpoints = Object.keys(columnBreakpoints)
-        .filter((key) => key !== "default")
-        .map(Number)
-        .sort((a, b) => b - a);
-
-      for (const bp of breakpoints) {
-        if (width < bp) {
-          setColumnCount(columnBreakpoints[bp]);
-          return;
-        }
-      }
-      setColumnCount(columnBreakpoints.default);
-    };
-
-    updateColumns();
-    const resizeObserver = new ResizeObserver(updateColumns);
-    resizeObserver.observe(container);
-    return () => resizeObserver.disconnect();
-  }, [columnBreakpoints]);
-
-  // Distribute children across columns in order (round-robin for equal distribution)
-  const columns: ReactNode[][] = Array.from({ length: columnCount }, () => []);
-  children.forEach((child, index) => {
-    columns[index % columnCount].push(child);
-  });
+  const childArray = Children.toArray(children);
+  const reorderedChildren = reorderForColumns(childArray, columnCount);
 
   return (
-    <div ref={containerRef} className="flex w-full" style={{ gap: `${gap}px` }}>
-      {columns.map((columnItems, colIndex) => (
-        <div
-          key={colIndex}
-          className="flex-1 flex flex-col"
-          style={{ gap: `${gap}px` }}
-        >
-          {columnItems}
-        </div>
-      ))}
+    <div
+      className={`columns-1 sm:columns-2 lg:columns-3 ${className ?? ""}`}
+      style={{ gap: `${gap}px` }}
+    >
+      {reorderedChildren.map((child) => {
+        if (isValidElement(child)) {
+          const props = child.props as Record<string, unknown>;
+          return cloneElement(child as ReactElement<Record<string, unknown>>, {
+            className: `${
+              (props.className as string) ?? ""
+            } break-inside-avoid`,
+            style: {
+              ...(props.style as React.CSSProperties),
+              marginBottom: `${gap}px`,
+            },
+          });
+        }
+        return child;
+      })}
     </div>
   );
 }

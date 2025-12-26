@@ -2,30 +2,29 @@
 
 import { useEffect, useState } from "react";
 
-type BreakpointSize = "mobile" | "tablet" | "desktop" | null;
+// Matches Tailwind's default breakpoints
+type Breakpoint = "sm" | "md" | "lg" | "xl" | "2xl" | null;
 
-const getBreakpoint = (width: number): BreakpointSize => {
-  if (width < 480) return "mobile"; // sm breakpoint
-  if (width <= 960) return "tablet"; // lg breakpoint
-  return "desktop";
+const getBreakpoint = (width: number): Breakpoint => {
+  if (width < 640) return "sm";
+  if (width < 768) return "md";
+  if (width < 1024) return "lg";
+  if (width < 1280) return "xl";
+  return "2xl";
 };
 
-export function useBreakpoint(): BreakpointSize {
-  const [screenSize, setScreenSize] = useState<BreakpointSize>(null);
+export function useBreakpoint(): Breakpoint {
+  const [breakpoint, setBreakpoint] = useState<Breakpoint>(null);
 
   useEffect(() => {
     const handleResize = () => {
-      setScreenSize(getBreakpoint(window.innerWidth));
+      setBreakpoint(getBreakpoint(window.innerWidth));
     };
-
-    window.addEventListener("resize", handleResize);
 
     handleResize();
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  return screenSize;
+  return breakpoint;
 }

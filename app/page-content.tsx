@@ -3,6 +3,7 @@
 import { ExperimentCard } from "@/components/experiment-card";
 import { MasonryGrid } from "@/components/masonry-grid";
 import { parseAsString, useQueryState } from "nuqs";
+import { VideoMeta } from "@/registry/ui/video";
 
 interface Page {
   title: string;
@@ -13,6 +14,7 @@ interface Page {
   tags: string[];
   theme?: "light" | "dark";
   buttonLabel?: string;
+  videoMeta?: VideoMeta;
 }
 
 export function PageContent({ pages }: { pages: Page[] }) {
@@ -27,7 +29,7 @@ export function PageContent({ pages }: { pages: Page[] }) {
 
   return (
     <main className="w-full">
-      <MasonryGrid gap={8} columnBreakpoints={{ default: 3, 1024: 2, 640: 1 }}>
+      <MasonryGrid>
         {filteredPages.map((page) => (
           <ExperimentCard
             key={page.url}
@@ -41,6 +43,7 @@ export function PageContent({ pages }: { pages: Page[] }) {
                       : "image",
                     src: page.image,
                     alt: page.title,
+                    videoMeta: page.videoMeta,
                   }
                 : undefined
             }

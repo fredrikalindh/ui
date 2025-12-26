@@ -9,6 +9,7 @@ import {
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/registry/ui/button";
+import { VideoWithPlaceholder, VideoMeta } from "@/registry/ui/video";
 
 interface ExperimentCardProps {
   name: string;
@@ -19,6 +20,7 @@ interface ExperimentCardProps {
     type: "image" | "video";
     src: string;
     alt?: string;
+    videoMeta?: VideoMeta;
   };
   url?: string;
   buttonLabel?: string;
@@ -30,6 +32,17 @@ function Media({ media }: { media: ExperimentCardProps["media"] }) {
   if (!media) return null;
 
   if (media.type === "video") {
+    // Use VideoWithPlaceholder if we have metadata
+    if (media.videoMeta) {
+      return (
+        <VideoWithPlaceholder
+          src={media.src}
+          meta={media.videoMeta}
+          className="w-full rounded-md overflow-hidden"
+        />
+      );
+    }
+    // Fallback for videos without metadata
     return (
       <video
         src={media.src}
@@ -46,7 +59,7 @@ function Media({ media }: { media: ExperimentCardProps["media"] }) {
     <img
       src={media.src}
       alt={media.alt ?? ""}
-      className="w-full h-auto rounded-md overflow-hidden"
+      className="w-full h-auto rounded-md overflow-hidden object-cover"
     />
   );
 }
@@ -65,7 +78,7 @@ export function ExperimentCard({
     <>
       <CardContent
         className={cn(
-          "p-0 relative flex flex-col box-border",
+          "p-0 relative flex flex-col box-border min-w-full",
           theme === "dark" ? "dark" : "light"
         )}
       >

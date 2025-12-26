@@ -1,7 +1,10 @@
+import { Suspense } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { source } from "@/lib/source";
 import { PageContent } from "./page-content";
 import { TagFilter } from "@/components/tag-filter";
+import videoMetadata from "@/public/video-metadata.json";
+import { VideoMeta } from "@/registry/ui/video";
 
 const socialLinks = [
   { label: "X", href: "https://x.com/fredrikalindh" },
@@ -12,17 +15,22 @@ const socialLinks = [
   },
 ];
 
+// Helper to get video metadata from the generated JSON
+function getVideoMeta(src: string): VideoMeta | undefined {
+  return (videoMetadata as Record<string, VideoMeta>)[src];
+}
+
 const externalProjects = [
   {
     title: "ASI",
     description: "",
     url: "https://asi.review/",
-    image:
-      "https://uploads.linklime.com/4926c544-40cc-4702-a436-808d980cf341/image.png",
+    image: "/asi.png",
     date: "2025-11-01",
     tags: ["Engineering"],
     theme: "light" as const,
     buttonLabel: undefined,
+    videoMeta: undefined,
   },
   {
     title: "Canvas",
@@ -33,6 +41,7 @@ const externalProjects = [
     tags: ["Engineering"],
     theme: "light" as const,
     buttonLabel: "View production",
+    videoMeta: getVideoMeta("/folder.mp4"),
   },
   {
     title: "Anywhere AI",
@@ -43,6 +52,7 @@ const externalProjects = [
     tags: ["Engineering"],
     theme: "dark" as const,
     buttonLabel: undefined,
+    videoMeta: getVideoMeta("/anywhere.mp4"),
   },
   {
     title: "Agape",
@@ -53,6 +63,7 @@ const externalProjects = [
     tags: ["Engineering"],
     theme: "light" as const,
     buttonLabel: undefined,
+    videoMeta: undefined,
   },
 ];
 
@@ -71,6 +82,7 @@ export default function Home() {
     tags: page.data.tags,
     theme: page.data.theme,
     buttonLabel: page.data.buttonLabel,
+    videoMeta: page.data.image ? getVideoMeta(page.data.image) : undefined,
   }));
 
   // Combine MDX pages with external projects
@@ -80,7 +92,7 @@ export default function Home() {
     <div className="mx-auto max-w-7xl flex flex-col min-h-svh px-4 sm:px-6 pt-12 sm:pt-16 pb-8">
       <header className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6 sm:gap-8 mb-8 sm:mb-16">
         <div className="flex flex-col gap-3">
-          <h1 className="text-xl tracking-tight font-medium">Fredrika</h1>
+          <h1 className="font-medium">Fredrika</h1>
           <p className="text-gray-600 dark:text-gray-400 max-w-xl">
             I built a product from 0 to $2M ARR and 1.5M MAU. Multidisciplinary
             background across engineering, design, and product.
@@ -100,8 +112,12 @@ export default function Home() {
           ))}
         </nav>
       </header>
-      <TagFilter />
-      <PageContent pages={pages} />
+      <Suspense fallback={<div className="h-12 mb-10" />}>
+        <TagFilter />
+      </Suspense>
+      <Suspense fallback={<div className="min-h-[400px]" />}>
+        <PageContent pages={pages} />
+      </Suspense>
       <ThemeToggle />
     </div>
   );
