@@ -29,7 +29,7 @@ const externalProjects = [
     date: "2025-11-01",
     tags: ["Engineering"],
     theme: "light" as const,
-    buttonLabel: undefined,
+    buttonLabel: "View production",
     videoMeta: undefined,
   },
   {
