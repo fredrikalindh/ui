@@ -33,6 +33,13 @@ export const docs = defineDocs({
   docs: {
     schema: frontmatterSchema.extend({
       ogImage: z.string().optional(),
+      centered: z.boolean().optional(),
+      published: z.boolean().default(true),
+      tags: z.array(z.string()).default([]),
+      image: z.string().optional(),
+      date: z.string().optional(),
+      theme: z.enum(["light", "dark"]).optional(),
+      buttonLabel: z.string().optional(),
     }),
   },
 });

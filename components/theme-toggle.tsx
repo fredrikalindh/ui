@@ -40,7 +40,7 @@ export function ThemeToggle() {
       type="button"
       variant="ghost"
       size="icon"
-      className="relative rounded-full"
+      className="rounded-full absolute right-2 bottom-2"
       onClick={handleToggle}
       aria-label="Toggle theme"
     >

@@ -6,7 +6,6 @@ import {
   CardTitle,
 } from "@/registry/ui/card";
 
-import Image from "next/image";
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/registry/ui/button";
@@ -20,7 +19,6 @@ interface ExperimentCardProps {
     type: "image" | "video";
     src: string;
     alt?: string;
-    aspectRatio?: string;
   };
   url?: string;
   buttonLabel?: string;
@@ -28,19 +26,14 @@ interface ExperimentCardProps {
   theme?: "dark" | "light";
 }
 
-const Media = ({ media }: { media: ExperimentCardProps["media"] }) => {
+function Media({ media }: { media: ExperimentCardProps["media"] }) {
   if (!media) return null;
-
-  const mediaStyle = media.aspectRatio
-    ? { aspectRatio: media.aspectRatio }
-    : { aspectRatio: "16/9" };
 
   if (media.type === "video") {
     return (
       <video
         src={media.src}
-        className="w-full rounded-md object-cover overflow-hidden"
-        style={mediaStyle}
+        className="w-full h-auto rounded-md object-cover overflow-hidden"
         autoPlay
         muted
         loop
@@ -53,13 +46,12 @@ const Media = ({ media }: { media: ExperimentCardProps["media"] }) => {
     <img
       src={media.src}
       alt={media.alt ?? ""}
-      className="object-cover w-full rounded-md overflow-hidden"
-      style={mediaStyle}
+      className="w-full h-auto rounded-md overflow-hidden"
     />
   );
-};
+}
 
-export const ExperimentCard: React.FC<ExperimentCardProps> = ({
+export function ExperimentCard({
   name,
   date,
   textPosition = "bottom",
@@ -68,12 +60,12 @@ export const ExperimentCard: React.FC<ExperimentCardProps> = ({
   buttonLabel,
   className,
   theme = "light",
-}) => {
+}: ExperimentCardProps) {
   const cardContent = (
     <>
       <CardContent
         className={cn(
-          "p-0 relative flex flex-1 box-border",
+          "p-0 relative flex flex-col box-border",
           theme === "dark" ? "dark" : "light"
         )}
       >
@@ -111,9 +103,9 @@ export const ExperimentCard: React.FC<ExperimentCardProps> = ({
     return (
       <a
         href={url}
-        className={cn(`block no-underline group/link w-full`, className)}
+        className={cn("block no-underline group/link w-full", className)}
       >
-        <Card className="flex flex-col cursor-pointer h-fit p-1 w-full">
+        <Card className="flex flex-col cursor-pointer p-1 w-full h-auto">
           {cardContent}
         </Card>
       </a>
@@ -121,8 +113,8 @@ export const ExperimentCard: React.FC<ExperimentCardProps> = ({
   }
 
   return (
-    <Card className={cn("min-h-fit p-0 flex flex-col w-full", className)}>
+    <Card className={cn("p-0 flex flex-col w-full h-auto", className)}>
       {cardContent}
     </Card>
   );
-};
+}

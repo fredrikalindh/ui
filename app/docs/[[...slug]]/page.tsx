@@ -78,14 +78,25 @@ export default async function Page(props: {
   const doc = page.data;
 
   const MDX = doc.body;
+  const isCentered = doc.centered ?? false;
 
   return (
     <DiffDocsPreviewProvider>
       <div
         data-slot="docs"
-        className="text-[1.05rem] sm:text-[15px] xl:w-full flex flex-col lg:grid w-full min-w-0 lg:grid-cols-2"
+        className={
+          isCentered
+            ? "text-[1.05rem] sm:text-[15px] flex flex-col w-full min-w-0"
+            : "text-[1.05rem] sm:text-[15px] xl:w-full flex flex-col lg:grid w-full min-w-0 lg:grid-cols-2"
+        }
       >
-        <div className="flex flex-col gap-2 px-4 lg:px-12 py-32 pb-100">
+        <div
+          className={
+            isCentered
+              ? "flex flex-col gap-2 px-4 lg:px-12 py-32 pb-100 mx-auto w-full max-w-5xl"
+              : "flex flex-col gap-2 px-4 lg:px-12 py-32 pb-100"
+          }
+        >
           <h1 className="scroll-m-20 text-6xl font-medium tracking-tight font-serif sm:text-7xl xl:text-8xl">
             {doc.title}
           </h1>
@@ -98,7 +109,7 @@ export default async function Page(props: {
 
           <MDX components={mdxComponents} />
         </div>
-        <DocsPreviewPane />
+        {!isCentered && <DocsPreviewPane />}
         <Fade
           side="top"
           background="var(--color-background)"

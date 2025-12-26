@@ -93,13 +93,13 @@ export const mdxComponents = {
     <strong className={cn("font-medium", className)} {...props} />
   ),
   ul: ({ className, ...props }: React.ComponentProps<"ul">) => (
-    <ul className={cn("my-6 ml-6 list-disc", className)} {...props} />
+    <ul className={cn("mb-2 mt-0 ml-6 list-disc", className)} {...props} />
   ),
   ol: ({ className, ...props }: React.ComponentProps<"ol">) => (
-    <ol className={cn("my-6 ml-6 list-decimal", className)} {...props} />
+    <ol className={cn("mb-2 mt-0 ml-6 list-decimal", className)} {...props} />
   ),
   li: ({ className, ...props }: React.ComponentProps<"li">) => (
-    <li className={cn("mt-2", className)} {...props} />
+    <li className={cn("mt-2 text-lg", className)} {...props} />
   ),
   blockquote: ({ className, ...props }: React.ComponentProps<"blockquote">) => (
     <blockquote
