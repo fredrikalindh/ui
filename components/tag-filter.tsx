@@ -12,7 +12,7 @@ export function TagFilter() {
   );
 
   return (
-    <Tabs defaultValue="All">
+    <Tabs defaultValue={activeTag}>
       <TabsList className="flex gap-2 mb-10">
         {ALL_TAGS.map((tag) => (
           <TabsTrigger

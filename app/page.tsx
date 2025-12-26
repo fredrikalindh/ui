@@ -93,9 +93,9 @@ export default function Home() {
       <header className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6 sm:gap-8 mb-8 sm:mb-16">
         <div className="flex flex-col gap-3">
           <h1 className="font-medium">Fredrika</h1>
-          <p className="text-gray-600 dark:text-gray-400 max-w-xl">
-            I built a product from 0 to $2M ARR and 1.5M MAU. Multidisciplinary
-            background across engineering, design, and product.
+          <p className="text-gray-600 dark:text-gray-400 max-w-lg">
+            Multidisciplinary background across engineering, design, and
+            product. Here are some recent projects and writings.
           </p>
         </div>
         <nav className="flex flex-row sm:flex-col gap-4 sm:gap-1 text-left sm:text-right text-sm sm:mt-10 items-end">

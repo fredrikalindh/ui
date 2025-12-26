@@ -6,10 +6,10 @@ import {
   CardTitle,
 } from "@/registry/ui/card";
 
-import React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/registry/ui/button";
 import { VideoWithPlaceholder, VideoMeta } from "@/registry/ui/video";
+import { motion } from "motion/react";
 
 interface ExperimentCardProps {
   name: string;
@@ -26,6 +26,7 @@ interface ExperimentCardProps {
   buttonLabel?: string;
   className?: string;
   theme?: "dark" | "light";
+  layoutId?: string;
 }
 
 function Media({ media }: { media: ExperimentCardProps["media"] }) {
@@ -64,6 +65,8 @@ function Media({ media }: { media: ExperimentCardProps["media"] }) {
   );
 }
 
+const MotionCard = motion.create(Card);
+
 export function ExperimentCard({
   name,
   date,
@@ -73,6 +76,7 @@ export function ExperimentCard({
   buttonLabel,
   className,
   theme = "light",
+  layoutId,
 }: ExperimentCardProps) {
   const cardContent = (
     <>
@@ -114,20 +118,24 @@ export function ExperimentCard({
 
   if (url) {
     return (
-      <a
+      <motion.a
         href={url}
         className={cn("block no-underline group/link w-full", className)}
+        layoutId={layoutId}
       >
         <Card className="flex flex-col cursor-pointer p-1 w-full h-auto">
           {cardContent}
         </Card>
-      </a>
+      </motion.a>
     );
   }
 
   return (
-    <Card className={cn("p-0 flex flex-col w-full h-auto", className)}>
+    <MotionCard
+      className={cn("p-0 flex flex-col w-full h-auto", className)}
+      layoutId={layoutId}
+    >
       {cardContent}
-    </Card>
+    </MotionCard>
   );
 }
