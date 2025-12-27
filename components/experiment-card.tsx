@@ -9,6 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/registry/ui/button";
 import { VideoWithPlaceholder, MediaMeta } from "@/registry/ui/video";
+import Image from "next/image";
 import { motion } from "motion/react";
 
 interface ExperimentCardProps {
@@ -27,8 +28,6 @@ interface ExperimentCardProps {
   className?: string;
   style?: React.CSSProperties;
   theme?: "dark" | "light";
-  layoutId?: string;
-  /** Mark as priority/LCP image - disables lazy loading and sets fetchpriority="high" */
   priority?: boolean;
 }
 
@@ -49,6 +48,7 @@ function Media({
           src={media.src}
           meta={media.meta}
           className="w-full rounded-md overflow-hidden"
+          priority={priority}
         />
       );
     }
@@ -65,52 +65,29 @@ function Media({
     );
   }
 
-  // Image with metadata - use aspect ratio to prevent layout shift
-  if (media.meta) {
-    return (
-      <div
-        className="w-full rounded-md overflow-hidden relative"
-        style={{ aspectRatio: media.meta.aspectRatio }}
-      >
-        {/* Blurred placeholder */}
-        {media.meta.placeholder && (
-          <img
-            aria-hidden
-            src={media.meta.placeholder}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{
-              filter: "blur(24px)",
-              transform: "scale(1.15)",
-            }}
-          />
-        )}
-        <img
-          src={media.src}
-          alt={media.alt ?? ""}
-          width={media.meta.width}
-          height={media.meta.height}
-          className="absolute inset-0 w-full h-full object-cover"
-          loading={priority ? "eager" : "lazy"}
-          fetchPriority={priority ? "high" : undefined}
-        />
-      </div>
-    );
-  }
-
-  // Fallback for images without metadata
   return (
-    <img
-      src={media.src}
-      alt={media.alt ?? ""}
-      className="w-full h-auto rounded-md overflow-hidden object-cover"
-      loading={priority ? "eager" : "lazy"}
-      fetchPriority={priority ? "high" : undefined}
-    />
+    <div
+      className="w-full rounded-md overflow-hidden relative"
+      style={media.meta ? { aspectRatio: media.meta.aspectRatio } : undefined}
+    >
+      <Image
+        src={media.src}
+        alt={media.alt ?? ""}
+        {...(media.meta
+          ? { fill: true, className: "object-cover" }
+          : {
+              width: 800,
+              height: 600,
+              className: "w-full h-auto object-cover",
+            })}
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 756px"
+        priority={priority}
+        placeholder={media.meta?.placeholder ? "blur" : undefined}
+        blurDataURL={media.meta?.placeholder}
+      />
+    </div>
   );
 }
-
-const MotionCard = motion.create(Card);
 
 export function ExperimentCard({
   name,
@@ -122,7 +99,6 @@ export function ExperimentCard({
   className,
   style,
   theme = "light",
-  layoutId,
   priority,
 }: ExperimentCardProps) {
   const cardContent = (
@@ -167,12 +143,12 @@ export function ExperimentCard({
     return (
       <motion.a
         href={url}
+        layoutId={url}
         className={cn(
           "block no-underline group/link w-full break-inside-avoid",
           className
         )}
         style={style}
-        layoutId={layoutId}
       >
         <Card
           className={cn(
@@ -187,15 +163,15 @@ export function ExperimentCard({
   }
 
   return (
-    <MotionCard
+    <motion.div
       className={cn(
         "p-0 flex flex-col w-full h-auto break-inside-avoid",
         className
       )}
       style={style}
-      layoutId={layoutId}
+      layoutId={url}
     >
       {cardContent}
-    </MotionCard>
+    </motion.div>
   );
 }

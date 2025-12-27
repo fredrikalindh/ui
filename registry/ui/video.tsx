@@ -10,9 +10,6 @@ export interface MediaMeta {
   height?: number;
 }
 
-/** @deprecated Use MediaMeta instead */
-export type VideoMeta = MediaMeta;
-
 export function VideoWithPlaceholder({
   src,
   controls = false,
@@ -103,13 +100,9 @@ export function VideoWithPlaceholder({
           aria-hidden
           src={placeholder}
           alt=""
-          width={videoRef.current?.videoWidth || 0}
-          height={videoRef.current?.videoHeight || 0}
+          fill
+          priority={priority}
           style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
             objectFit: "cover",
             filter: "blur(24px)",
             transform: "scale(1.15)",

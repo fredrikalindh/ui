@@ -32,7 +32,6 @@ export function PageContent({ pages }: { pages: Page[] }) {
         {pages.map((page, index) => (
           <ExperimentCard
             key={page.url}
-            layoutId={page.url}
             name={page.title}
             date={page.date ?? ""}
             media={

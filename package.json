@@ -2,6 +2,12 @@
   "name": "registry",
   "version": "0.1.0",
   "private": true,
+  "browserslist": [
+    "chrome >= 87",
+    "firefox >= 78",
+    "safari >= 14",
+    "edge >= 88"
+  ],
   "author": {
     "name": "Fredrika Lindh",
     "url": "https://x.com/fredrikalindh"
