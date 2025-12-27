@@ -23,6 +23,7 @@ export function VideoWithPlaceholder({
   className,
   style,
   meta,
+  priority = false,
 }: {
   src: string;
   controls?: boolean;
@@ -36,15 +37,19 @@ export function VideoWithPlaceholder({
     aspectRatio: number;
     placeholder: string;
   };
+  priority?: boolean;
 }) {
   const aspectRatio = meta.aspectRatio ?? null;
   const placeholder = meta.placeholder ?? null;
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(priority);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    // Skip intersection observer for priority videos - load immediately
+    if (priority) return;
+
     const el = containerRef.current;
     if (!el) return;
     const io = new IntersectionObserver(
@@ -60,7 +65,7 @@ export function VideoWithPlaceholder({
     );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [priority]);
 
   // when visible – set src on <video> to avoid network before needed
   useEffect(() => {

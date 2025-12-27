@@ -28,9 +28,17 @@ interface ExperimentCardProps {
   style?: React.CSSProperties;
   theme?: "dark" | "light";
   layoutId?: string;
+  /** Mark as priority/LCP image - disables lazy loading and sets fetchpriority="high" */
+  priority?: boolean;
 }
 
-function Media({ media }: { media: ExperimentCardProps["media"] }) {
+function Media({
+  media,
+  priority,
+}: {
+  media: ExperimentCardProps["media"];
+  priority?: boolean;
+}) {
   if (!media) return null;
 
   if (media.type === "video") {
@@ -83,7 +91,8 @@ function Media({ media }: { media: ExperimentCardProps["media"] }) {
           width={media.meta.width}
           height={media.meta.height}
           className="absolute inset-0 w-full h-full object-cover"
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : undefined}
         />
       </div>
     );
@@ -95,6 +104,8 @@ function Media({ media }: { media: ExperimentCardProps["media"] }) {
       src={media.src}
       alt={media.alt ?? ""}
       className="w-full h-auto rounded-md overflow-hidden object-cover"
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : undefined}
     />
   );
 }
@@ -112,6 +123,7 @@ export function ExperimentCard({
   style,
   theme = "light",
   layoutId,
+  priority,
 }: ExperimentCardProps) {
   const cardContent = (
     <>
@@ -134,7 +146,7 @@ export function ExperimentCard({
             {date}
           </p>
         </CardHeader>
-        {media && <Media media={media} />}
+        {media && <Media media={media} priority={priority} />}
       </CardContent>
 
       {buttonLabel && url && (
