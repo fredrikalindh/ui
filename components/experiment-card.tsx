@@ -25,6 +25,7 @@ interface ExperimentCardProps {
   url?: string;
   buttonLabel?: string;
   className?: string;
+  style?: React.CSSProperties;
   theme?: "dark" | "light";
   layoutId?: string;
 }
@@ -75,6 +76,7 @@ export function ExperimentCard({
   url,
   buttonLabel,
   className,
+  style,
   theme = "light",
   layoutId,
 }: ExperimentCardProps) {
@@ -120,10 +122,19 @@ export function ExperimentCard({
     return (
       <motion.a
         href={url}
-        className={cn("block no-underline group/link w-full", className)}
+        className={cn(
+          "block no-underline group/link w-full break-inside-avoid",
+          className
+        )}
+        style={style}
         layoutId={layoutId}
       >
-        <Card className="flex flex-col cursor-pointer p-1 w-full h-auto">
+        <Card
+          className={cn(
+            "flex flex-col cursor-pointer w-full h-auto",
+            buttonLabel ? "p-1" : "p-0"
+          )}
+        >
           {cardContent}
         </Card>
       </motion.a>
@@ -132,7 +143,11 @@ export function ExperimentCard({
 
   return (
     <MotionCard
-      className={cn("p-0 flex flex-col w-full h-auto", className)}
+      className={cn(
+        "p-0 flex flex-col w-full h-auto break-inside-avoid",
+        className
+      )}
+      style={style}
       layoutId={layoutId}
     >
       {cardContent}

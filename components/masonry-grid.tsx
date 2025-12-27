@@ -54,9 +54,7 @@ export function MasonryGrid({
         if (isValidElement(child)) {
           const props = child.props as Record<string, unknown>;
           return cloneElement(child as ReactElement<Record<string, unknown>>, {
-            className: `${
-              (props.className as string) ?? ""
-            } break-inside-avoid`,
+            className: `${props.className ?? ""} break-inside-avoid`,
             style: {
               ...(props.style as React.CSSProperties),
               marginBottom: `${gap}px`,

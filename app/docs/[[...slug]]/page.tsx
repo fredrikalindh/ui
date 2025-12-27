@@ -93,7 +93,7 @@ export default async function Page(props: {
         <div
           className={
             isCentered
-              ? "flex flex-col gap-2 px-4 lg:px-12 py-32 pb-100 mx-auto w-full max-w-5xl"
+              ? "flex flex-col gap-2 px-4 lg:px-12 py-32 pb-100 mx-auto w-full max-w-4xl"
               : "flex flex-col gap-2 px-4 lg:px-12 py-32 pb-100"
           }
         >
