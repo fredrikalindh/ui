@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
-    "prebuild": "node scripts/generate-video-metadata.mjs",
+    "prebuild": "node scripts/generate-media-metadata.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -16,7 +16,7 @@
     "test:ui": "vitest --ui",
     "test:watch": "vitest",
     "registry:build": "shadcn build",
-    "generate:video-meta": "node scripts/generate-video-metadata.mjs"
+    "generate:media-meta": "node scripts/generate-media-metadata.mjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",

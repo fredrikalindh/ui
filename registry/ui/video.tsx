@@ -2,12 +2,16 @@ import { useEffect, useRef, useState } from "react";
 
 import Image from "next/image";
 
-export interface VideoMeta {
+export interface MediaMeta {
+  type?: "video" | "image";
   aspectRatio: number;
   placeholder: string;
   width?: number;
   height?: number;
 }
+
+/** @deprecated Use MediaMeta instead */
+export type VideoMeta = MediaMeta;
 
 export function VideoWithPlaceholder({
   src,

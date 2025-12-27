@@ -8,7 +8,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/registry/ui/button";
-import { VideoWithPlaceholder, VideoMeta } from "@/registry/ui/video";
+import { VideoWithPlaceholder, MediaMeta } from "@/registry/ui/video";
 import { motion } from "motion/react";
 
 interface ExperimentCardProps {
@@ -20,7 +20,7 @@ interface ExperimentCardProps {
     type: "image" | "video";
     src: string;
     alt?: string;
-    videoMeta?: VideoMeta;
+    meta?: MediaMeta;
   };
   url?: string;
   buttonLabel?: string;
@@ -35,11 +35,11 @@ function Media({ media }: { media: ExperimentCardProps["media"] }) {
 
   if (media.type === "video") {
     // Use VideoWithPlaceholder if we have metadata
-    if (media.videoMeta) {
+    if (media.meta) {
       return (
         <VideoWithPlaceholder
           src={media.src}
-          meta={media.videoMeta}
+          meta={media.meta}
           className="w-full rounded-md overflow-hidden"
         />
       );
@@ -57,6 +57,39 @@ function Media({ media }: { media: ExperimentCardProps["media"] }) {
     );
   }
 
+  // Image with metadata - use aspect ratio to prevent layout shift
+  if (media.meta) {
+    return (
+      <div
+        className="w-full rounded-md overflow-hidden relative"
+        style={{ aspectRatio: media.meta.aspectRatio }}
+      >
+        {/* Blurred placeholder */}
+        {media.meta.placeholder && (
+          <img
+            aria-hidden
+            src={media.meta.placeholder}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{
+              filter: "blur(24px)",
+              transform: "scale(1.15)",
+            }}
+          />
+        )}
+        <img
+          src={media.src}
+          alt={media.alt ?? ""}
+          width={media.meta.width}
+          height={media.meta.height}
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+
+  // Fallback for images without metadata
   return (
     <img
       src={media.src}

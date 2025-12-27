@@ -3,7 +3,7 @@
 import { ExperimentCard } from "@/components/experiment-card";
 import { MasonryGrid } from "@/components/masonry-grid";
 import { parseAsString, useQueryState } from "nuqs";
-import { VideoMeta } from "@/registry/ui/video";
+import { MediaMeta } from "@/registry/ui/video";
 import { LayoutGroup } from "motion/react";
 
 interface Page {
@@ -15,7 +15,7 @@ interface Page {
   tags: string[];
   theme?: "light" | "dark";
   buttonLabel?: string;
-  videoMeta?: VideoMeta;
+  mediaMeta?: MediaMeta;
 }
 
 export function PageContent({ pages }: { pages: Page[] }) {
@@ -45,7 +45,7 @@ export function PageContent({ pages }: { pages: Page[] }) {
                         : "image",
                       src: page.image,
                       alt: page.title,
-                      videoMeta: page.videoMeta,
+                      meta: page.mediaMeta,
                     }
                   : undefined
               }

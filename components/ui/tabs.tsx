@@ -34,7 +34,6 @@ function TabsList({
   React.useLayoutEffect(() => {
     const updateClip = () => {
       const container = containerRef.current;
-      console.log({ container });
 
       if (!container) return;
 

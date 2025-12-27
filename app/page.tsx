@@ -3,8 +3,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { source } from "@/lib/source";
 import { PageContent } from "./page-content";
 import { TagFilter } from "@/components/tag-filter";
-import videoMetadata from "@/public/video-metadata.json";
-import { VideoMeta } from "@/registry/ui/video";
+import mediaMetadata from "@/public/media-metadata.json";
+import { MediaMeta } from "@/registry/ui/video";
 
 const socialLinks = [
   { label: "X", href: "https://x.com/fredrikalindh" },
@@ -15,9 +15,9 @@ const socialLinks = [
   },
 ];
 
-// Helper to get video metadata from the generated JSON
-function getVideoMeta(src: string): VideoMeta | undefined {
-  return (videoMetadata as Record<string, VideoMeta>)[src];
+// Helper to get media metadata from the generated JSON
+function getMediaMeta(src: string): MediaMeta | undefined {
+  return (mediaMetadata as Record<string, MediaMeta>)[src];
 }
 
 const externalProjects = [
@@ -30,7 +30,7 @@ const externalProjects = [
     tags: ["Engineering"],
     theme: "light" as const,
     buttonLabel: "View production",
-    videoMeta: undefined,
+    mediaMeta: getMediaMeta("/asi.png"),
   },
   {
     title: "Canvas",
@@ -41,7 +41,7 @@ const externalProjects = [
     tags: ["Engineering"],
     theme: "light" as const,
     buttonLabel: "View production",
-    videoMeta: getVideoMeta("/folder.mp4"),
+    mediaMeta: getMediaMeta("/folder.mp4"),
   },
   {
     title: "Anywhere AI",
@@ -52,7 +52,7 @@ const externalProjects = [
     tags: ["Engineering"],
     theme: "dark" as const,
     buttonLabel: undefined,
-    videoMeta: getVideoMeta("/anywhere.mp4"),
+    mediaMeta: getMediaMeta("/anywhere.mp4"),
   },
   {
     title: "Agape",
@@ -63,7 +63,7 @@ const externalProjects = [
     tags: ["Engineering"],
     theme: "light" as const,
     buttonLabel: undefined,
-    videoMeta: undefined,
+    mediaMeta: getMediaMeta("/agape.png"),
   },
 ];
 
@@ -82,7 +82,7 @@ export default function Home() {
     tags: page.data.tags,
     theme: page.data.theme,
     buttonLabel: page.data.buttonLabel,
-    videoMeta: page.data.image ? getVideoMeta(page.data.image) : undefined,
+    mediaMeta: page.data.image ? getMediaMeta(page.data.image) : undefined,
   }));
 
   // Combine MDX pages with external projects
