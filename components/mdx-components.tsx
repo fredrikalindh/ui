@@ -10,6 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Button } from "../registry/ui/button";
 import { CodeTabs } from "./code-tabs";
 import { getIconForLanguageExtension } from "./icons";
+import { ExampleCard } from "./example-card";
+import { LinkPreviewServer } from "./link-preview-server";
 
 export const mdxComponents = {
   h1: ({ className, ...props }: React.ComponentProps<"h1">) => (
@@ -74,12 +76,26 @@ export const mdxComponents = {
       {...props}
     />
   ),
-  a: ({ className, ...props }: React.ComponentProps<"a">) => (
-    <a
-      className={cn("font-medium underline underline-offset-4", className)}
-      {...props}
-    />
-  ),
+  a: ({ className, href, children, ...props }: React.ComponentProps<"a">) => {
+    if (!href) {
+      return (
+        <a
+          className={cn("font-medium underline underline-offset-4", className)}
+          {...props}
+        >
+          {children}
+        </a>
+      );
+    }
+    return (
+      <LinkPreviewServer
+        href={href}
+        className={cn("font-medium underline underline-offset-4", className)}
+      >
+        {children}
+      </LinkPreviewServer>
+    );
+  },
   p: ({ className, ...props }: React.ComponentProps<"p">) => (
     <p
       className={cn(
@@ -93,13 +109,19 @@ export const mdxComponents = {
     <strong className={cn("font-medium", className)} {...props} />
   ),
   ul: ({ className, ...props }: React.ComponentProps<"ul">) => (
-    <ul className={cn("mb-2 mt-0 ml-6 list-disc", className)} {...props} />
+    <ul
+      className={cn(
+        "mb-2 mt-0 ml-6 list-disc [&>li.task-list-item]:list-none",
+        className
+      )}
+      {...props}
+    />
   ),
   ol: ({ className, ...props }: React.ComponentProps<"ol">) => (
     <ol className={cn("mb-2 mt-0 ml-6 list-decimal", className)} {...props} />
   ),
   li: ({ className, ...props }: React.ComponentProps<"li">) => (
-    <li className={cn("mt-2 text-lg", className)} {...props} />
+    <li className={cn("mt-2 text-lg pl-2", className)} {...props} />
   ),
   blockquote: ({ className, ...props }: React.ComponentProps<"blockquote">) => (
     <blockquote
@@ -109,7 +131,11 @@ export const mdxComponents = {
   ),
   img: ({ className, alt, ...props }: React.ComponentProps<"img">) => (
     // eslint-disable-next-line @next/next/no-img-element
-    <img className={cn("rounded-md", className)} alt={alt} {...props} />
+    <img
+      className={cn("rounded-md border max-w-md overflow-hidden", className)}
+      alt={alt}
+      {...props}
+    />
   ),
   hr: ({ ...props }: React.ComponentProps<"hr">) => (
     <hr className="my-4 md:mt-12" {...props} />
@@ -267,7 +293,10 @@ export const mdxComponents = {
     ...props
   }: React.ComponentProps<"img">) => (
     <Image
-      className={cn("mt-6 rounded-md border", className)}
+      className={cn(
+        "mt-6 rounded-2xl border max-w-md overflow-hidden",
+        className
+      )}
       src={src as string}
       width={Number(width)}
       height={Number(height)}
@@ -328,4 +357,28 @@ export const mdxComponents = {
       {...props}
     />
   ),
+  Loom: ({
+    url,
+    className,
+    title,
+  }: {
+    url: string;
+    className?: string;
+    title?: string;
+  }) => {
+    // Convert share URL to embed URL
+    const embedUrl = url.replace("/share/", "/embed/");
+    return (
+      <div className={cn("mt-6 aspect-video w-full max-w-2xl", className)}>
+        <iframe
+          src={embedUrl}
+          className="size-full rounded-xl"
+          allowFullScreen
+          allow="fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+          title={title || "Loom video"}
+        />
+      </div>
+    );
+  },
+  ExampleCard,
 };
