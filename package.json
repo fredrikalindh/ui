@@ -14,7 +14,6 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
-    "prebuild": "node scripts/generate-media-metadata.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
