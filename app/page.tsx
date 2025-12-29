@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { source } from "@/lib/source";
 import { PageContent } from "./page-content";
 import { TagFilter } from "@/components/tag-filter";
@@ -118,7 +117,6 @@ export default function Home() {
       <Suspense fallback={<div className="min-h-[400px]" />}>
         <PageContent pages={pages} />
       </Suspense>
-      <ThemeToggle />
     </div>
   );
 }

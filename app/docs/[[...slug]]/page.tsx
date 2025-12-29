@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 import { DocsPreviewPane } from "@/components/docs-preview";
 import { DiffDocsPreviewProvider } from "@/components/diff-docs-provider";
@@ -97,6 +99,13 @@ export default async function Page(props: {
               : "flex flex-col gap-2 px-4 lg:px-12 py-32 pb-100"
           }
         >
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4 group"
+          >
+            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+            <span>Back</span>
+          </Link>
           <h1 className="scroll-m-20 text-6xl font-medium tracking-tight font-serif sm:text-7xl xl:text-8xl">
             {doc.title}
           </h1>
