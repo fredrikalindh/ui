@@ -1,0 +1,5 @@
+# Generate media metadata and stage the file if it changed
+node scripts/generate-media-metadata.mjs
+
+# Stage the metadata file if it was updated
+git add public/media-metadata.json 2>/dev/null || true

@@ -21,7 +21,8 @@
     "test:ui": "vitest --ui",
     "test:watch": "vitest",
     "registry:build": "shadcn build",
-    "generate:media-meta": "node scripts/generate-media-metadata.mjs"
+    "generate:media-meta": "node scripts/generate-media-metadata.mjs",
+    "prepare": "husky"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",
@@ -67,6 +68,7 @@
     "eslint": "^9.32.0",
     "eslint-config-next": "16.0.0",
     "happy-dom": "^20.0.8",
+    "husky": "^9.1.7",
     "jsdom": "^27.0.1",
     "tailwindcss": "^4.1.11",
     "typescript": "^5.9.2",
