@@ -38,29 +38,15 @@ function Media({
   media: ExperimentCardProps["media"];
   priority?: boolean;
 }) {
-  if (!media) return null;
+  if (!media?.meta) return null;
 
   if (media.type === "video") {
-    // Use VideoWithPlaceholder if we have metadata
-    if (media.meta) {
-      return (
-        <VideoWithPlaceholder
-          src={media.src}
-          meta={media.meta}
-          className="w-full rounded-md overflow-hidden"
-          priority={priority}
-        />
-      );
-    }
-    // Fallback for videos without metadata
     return (
-      <video
+      <VideoWithPlaceholder
         src={media.src}
-        className="w-full h-auto rounded-md object-cover overflow-hidden"
-        autoPlay
-        muted
-        loop
-        playsInline
+        meta={media.meta}
+        className="w-full rounded-md overflow-hidden"
+        priority={priority}
       />
     );
   }
@@ -68,22 +54,22 @@ function Media({
   return (
     <div
       className="w-full rounded-md overflow-hidden relative"
-      style={media.meta ? { aspectRatio: media.meta.aspectRatio } : undefined}
+      style={{ aspectRatio: media.meta.aspectRatio }}
     >
+      {/* Padding fallback for browsers without aspect-ratio support */}
+      <div
+        style={{ paddingTop: `${(1 / media.meta.aspectRatio) * 100}%` }}
+        aria-hidden
+      />
       <Image
         src={media.src}
         alt={media.alt ?? ""}
-        {...(media.meta
-          ? { fill: true, className: "object-cover" }
-          : {
-              width: 800,
-              height: 600,
-              className: "w-full h-auto object-cover",
-            })}
+        fill
+        className="object-cover"
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 756px"
         priority={priority}
-        placeholder={media.meta?.placeholder ? "blur" : undefined}
-        blurDataURL={media.meta?.placeholder}
+        placeholder="blur"
+        blurDataURL={media.meta.placeholder}
       />
     </div>
   );
