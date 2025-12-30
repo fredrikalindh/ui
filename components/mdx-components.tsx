@@ -111,7 +111,7 @@ export const mdxComponents = {
   ul: ({ className, ...props }: React.ComponentProps<"ul">) => (
     <ul
       className={cn(
-        "mb-2 mt-0 ml-6 list-disc [&>li.task-list-item]:list-none",
+        "mb-2 mt-0 ml-6 list-disc [&>li.task-list-item]:list-none [&:has(>li.task-list-item)]:ml-0",
         className
       )}
       {...props}
@@ -121,7 +121,10 @@ export const mdxComponents = {
     <ol className={cn("mb-2 mt-0 ml-6 list-decimal", className)} {...props} />
   ),
   li: ({ className, ...props }: React.ComponentProps<"li">) => (
-    <li className={cn("mt-2 text-lg pl-2", className)} {...props} />
+    <li
+      className={cn("mt-2 text-lg pl-2 [&.task-list-item]:pl-0", className)}
+      {...props}
+    />
   ),
   blockquote: ({ className, ...props }: React.ComponentProps<"blockquote">) => (
     <blockquote
