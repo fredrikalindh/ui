@@ -179,7 +179,6 @@
   .task-list-item details {
     display: block;
     margin-left: 1rem;
-    margin-top: 0.5rem;
 
     & > *:not(summary) {
       margin-top: 0.5rem !important;
@@ -187,13 +186,13 @@
   }
 
   /* Summary styling */
-  li summary,
-  .task-list-item summary {
+  summary {
     @apply text-sm text-muted-foreground cursor-pointer select-none;
     display: flex;
     align-items: center;
     gap: 0.25rem;
     list-style: none;
+    margin-top: 0.5rem;
 
     &::before {
       content: "";
@@ -214,18 +213,18 @@
     }
   }
 
-  li details[open] > summary::before,
+  details[open] > summary::before,
   .task-list-item details[open] > summary::before {
     transform: rotate(90deg);
   }
 
   /* Remove default summary marker */
-  li summary::-webkit-details-marker,
+  summary::-webkit-details-marker,
   .task-list-item summary::-webkit-details-marker {
     display: none;
   }
 
-  li summary::marker,
+  summary::marker,
   .task-list-item summary::marker {
     display: none;
   }

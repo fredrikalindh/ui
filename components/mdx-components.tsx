@@ -33,7 +33,7 @@ export const mdxComponents = {
           .replace(/\?/g, "")
           .toLowerCase()}
         className={cn(
-          "font-heading mt-8 scroll-m-28 text-xl font-medium tracking-tight first:mt-0 lg:mt-8 [&+p]:!mt-4 *:[code]:text-xl",
+          "font-heading mt-16 scroll-m-28 text-xl font-medium tracking-tight first:mt-0 lg:mt-8 [&+p]:!mt-4 *:[code]:text-xl",
           className
         )}
         {...props}
@@ -43,7 +43,7 @@ export const mdxComponents = {
   h3: ({ className, ...props }: React.ComponentProps<"h3">) => (
     <h3
       className={cn(
-        "font-heading mt-8 scroll-m-28 text-lg font-medium tracking-tight *:[code]:text-xl",
+        "font-heading mt-12 scroll-m-28 text-lg font-medium tracking-tight *:[code]:text-xl",
         className
       )}
       {...props}
@@ -99,7 +99,7 @@ export const mdxComponents = {
   p: ({ className, ...props }: React.ComponentProps<"p">) => (
     <p
       className={cn(
-        "leading-relaxed [&:not(:first-child)]:mt-6 text-lg",
+        "leading-relaxed [&:not(:first-child)]:mt-2 text-lg",
         className
       )}
       {...props}
@@ -366,10 +366,12 @@ export const mdxComponents = {
     className?: string;
     title?: string;
   }) => {
-    // Convert share URL to embed URL
-    const embedUrl = url.replace("/share/", "/embed/");
+    // Convert share URL to embed URL and disable autoplay
+    const baseUrl = url.replace("/share/", "/embed/");
+    const separator = baseUrl.includes("?") ? "&" : "?";
+    const embedUrl = `${baseUrl}${separator}autoplay=0`;
     return (
-      <div className={cn("mt-6 aspect-video w-full max-w-2xl", className)}>
+      <div className={cn("my-6 aspect-video w-full max-w-2xl", className)}>
         <iframe
           src={embedUrl}
           className="size-full rounded-xl"
