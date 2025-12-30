@@ -67,10 +67,17 @@ const externalProjects = [
 ];
 
 export default function Home() {
-  const allPages = source.getPages().filter((page) => {
-    // Filter out unpublished pages
-    return page.data.published !== false;
-  });
+  const allPages = source
+    .getPages()
+    .filter((page) => {
+      // Filter out unpublished pages
+      return page.data.published !== false;
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.data.date ?? "").getTime() -
+        new Date(a.data.date ?? "").getTime()
+    );
 
   const mdxPages = allPages.map((page) => ({
     title: page.data.title,

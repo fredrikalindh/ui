@@ -5,6 +5,7 @@
 @custom-variant light (&:is(.light *));
 
 @theme inline {
+  --color-blue: #0070f3;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);

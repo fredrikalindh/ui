@@ -7,6 +7,7 @@ import { DiffDocsPreviewProvider } from "@/components/diff-docs-provider";
 import { mdxComponents } from "@/components/mdx-components";
 import { source } from "@/lib/source";
 import { Fade } from "@/components/blur-fade/blur-fade";
+import { Toc } from "@/components/toc";
 
 export const revalidate = false;
 export const dynamic = "force-static";
@@ -95,8 +96,8 @@ export default async function Page(props: {
         <div
           className={
             isCentered
-              ? "flex flex-col gap-2 px-4 lg:px-12 py-32 pb-100 mx-auto w-full max-w-4xl"
-              : "flex flex-col gap-2 px-4 lg:px-12 py-32 pb-100"
+              ? "flex flex-col gap-2 px-4 lg:px-12 py-32 pb-100 mx-auto w-full max-w-4xl relative"
+              : "flex flex-col gap-2 px-4 lg:px-12 py-32 pb-100 relative"
           }
         >
           <Link
@@ -117,6 +118,13 @@ export default async function Page(props: {
           )}
 
           <MDX components={mdxComponents} />
+
+          {/* TOC positioned to the left of the content on wide screens */}
+          {isCentered && doc.toc.length > 0 && (
+            <aside className="fixed left-8 top-32 hidden 2xl:block w-64 z-20">
+              <Toc toc={doc.toc} />
+            </aside>
+          )}
         </div>
         {!isCentered && <DocsPreviewPane />}
         <Fade
