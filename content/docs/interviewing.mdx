@@ -13,133 +13,22 @@ theme: "light"
 import { InterviewSchedule } from "@/components/interview-schedule";
 
 
-This is the playbook I and many friends have followed to land jobs at OpenAI, Midjourney, Cursor, and similar companies—without impressive backgrounds. The interviews aren't much harder than at other startups. If you're willing to put in a few months of focused effort, it's achievable. It won't be pleasant, but it's very likely to increase your salary by 3-10x. 
+This is the playbook I and many friends have followed to land jobs at OpenAI, Midjourney, Cursor, and similar companies, without impressive backgrounds. The interviews aren't much harder than at other startups. If you're willing to put in a few months of focused effort, it's achievable. It won't be pleasant, but it's very likely to increase your salary by 3-10x.
 
-I'll walk through everything: getting interviews, nailing them, and negotiating offers. This is focused on technical roles, but most of it applies broadly.
+I'll walk through everything: getting interviews, nailing them, and negotiating offers. Then in the end there's a <Link href="#the-playbook">checklist</Link> summarizing all the advice. This is focused on technical roles, but most of it applies broadly.
 
-## My experience
-
-When I started, I didn't think any of this was possible. People around me encouraged me to try anyway. I'm glad I did.
-
-Over 3.5 months, I interviewed with 30+ companies and did 70+ interviews. In the end, I had offers from OpenAI, Cursor, Midjourney, ElevenLabs, and Vercel. But when I started, I had no idea what to expect. I'd never interviewed before.
-
-The best way to learn was to start doing them. This was my plan back then:
-
-<Image src='/itw-plan.png' alt="My interview plan" width={528} height={306} className='p-4 bg-white mx-auto rotate-2' />
-
-I built a database of companies that fit my criteria and ranked them. Then I started at the top, but not the very top. I wanted practice first. Most intros came through a recruiter. Some through founders I DMed on X.
-
-After screening calls with 20+ companies, I picked 5 for full loops. I focused on companies without take-home tests. For questions that went poorly, I added them to flashcards and researched unfamiliar problem spaces using Claude (and my [flashcards MCP](https://x.com/fredrikalindh/status/1962905575051641306)). For some companies, I built demos and sent Looms before calls. The reaction was positive, but not as effective as demos I did later over multiple weeks. During this time, I also started building [ASI](https://asi.review/) because I was interested in the codegen space.
-
-This process felt terrible. I spent days preparing only to get rejected or to find out they needed someone completely different. I'd lie in bed replaying mistakes. I lost my appetite and dropped 3 kilos in two weeks. There were moments I wanted to accept something random and be done with it.
-
-From those 5 companies, I got 2 offers. They wanted a response within a week. But I wanted to try my top-tier companies first.
-
-I got an intro to ElevenLabs through someone I'd talked to once six months earlier. While coworking at the Lovable office, I showed my projects to Matheus from Midjourney. He thought they were cool and shared them on Slack. They asked for a demo, so I built [this one](https://fredrika.dev/docs) in two days. That demo basically got me the offer.
-
-Since it was done, I figured I might as well post about it. I recorded a video, posted at 9 AM PST, and asked friends to comment early. It went viral with over 120k views. The next day I had messages from Cursor, OpenAI, Cognition, and Vercel. I told everyone I had an offer I'd sign unless they could move fast.
-
-What followed was the most intense two weeks of my life. Vercel made an offer the next day. Cognition interviews Sunday–Monday. Cursor trial Tuesday–Wednesday, coding interview Thursday, offer by Monday. Then six OpenAI interviews Monday–Tuesday the following week, offer Wednesday. On Thursday, I signed with Cursor to work on the IDE.
+## TL;DR
+- Career pages are one of the worst ways to get interviews. X posts are one of the best.
+- You get good at interviews by doing a lot of them. Most are 80% similar.
+- A good demo is the best way to remove uncertainty from the interview process.
+- You can get a 15% salary bump by negotiating well, but 3-10x from having multiple offers.
 
 
-<ExampleCard filename="interview-playbook.md">
-## The playbook
+## Getting interviews
 
-### General preparation
+I haven't studied at university. Nor worked at a reputable startup. Because of this, I thought getting interviews - and especially offers - from companies like OpenAI would be impossible. I was wrong.
 
-- [ ]  Prepare personal pitch.
-    <details>
-    <summary>Example pitch</summary>
-
-    > *i coded & designed professionally since 16. went to the most selective coding school in Europe. ~1% get in. after a year there, i realized i could learn better by building real projects. so I released 9 different apps and became a maker of the year on product hunt 2021*
-
-    > *one of those projects quickly got traction and we went from 0 to 1M MAU in just a few months so we started working full time on that. i worked very much across the stack. we tried a few different constellations, but majority of the time it was me carrying product, design, and frontend alone, while we had 4 backend devs.* 
-
-    > *in the beginning of the year I went to SF and met with my friends working in OpenAI, Midjourney, Cursor, etc., and they told me the things they were working on. I realized that sounded much more interesting. So I left in April, and want to move to SF.*
-    </details>
-- [ ]  Write about two projects you've done and record demo.
-    <details>
-    <summary>Example projects</summary>
-
-    - **[Canvas](https://www.loom.com/share/0d2796ce9bcb42529253adf9fb2a8894):** A collaborative whiteboard with real-time sync, infinite zoom, and custom shape rendering
-    - **[ASI](https://www.loom.com/share/df2e4c54310e4b95933449f0b9f1b9e2):** An AI code review tool with streaming diffs and intelligent suggestions - [live site](https://asi.review/)
-    - **[Fast grid](https://www.loom.com/share/540ad426c22c4db192293babfc9c7fdf):** one of the most performant web tables in production, using Skia with Rust bindings.
-    </details>
-- [ ]  Contact recruiters to get initial interviews
-- [ ]  Do a lot of screening calls (20-50)
-- [ ]  Select 5-10 companies and do full loop, hopefully get at least 2 offers. Do this before interviewing with your dream companies.
-
-### Technical interview preparation
-
-- [ ]  Practice example interviews.
-    <details>
-    <summary>Example exercises</summary>
-    - JSON Stringify with circular references serialize & unserialize
-    - Drag & drop infinite canvas from scratch (without libs, minimizing rerenders, use devtools)
-    - Write a basic version of AI SDK from scratch
-    - Stream AI chat to multiple clients at the same time
-    </details>
-- [ ]  Practice system design.
-    <details>
-    <summary>System design resources</summary>
-
-    - [GreatFrontend](https://www.greatfrontend.com/) - Frontend system design questions
-    - [HelloInterview](https://www.hellointerview.com/learn/system-design/in-a-hurry/introduction) - Quick system design guide
-    </details>
-- [ ]  Practice LeetCode.
-    <details>
-    <summary>Example exercises</summary>
-
-    - [Binary Search](https://leetcode.com/problems/binary-search/description/)
-    - [Same Tree](https://leetcode.com/problems/same-tree/description/)
-    - [Longest Substring Without Repeating Characters](https://leetcode.com/problems/longest-substring-without-repeating-characters/description/)
-    - [Binary Tree Inorder Traversal](https://leetcode.com/problems/binary-tree-inorder-traversal/description/)
-    - [Remove Duplicates from Sorted Array](https://leetcode.com/problems/remove-duplicates-from-sorted-array/description/)
-    - [Merge Intervals](https://leetcode.com/problems/merge-intervals/description/)
-    - [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store/description/)
-    - [Product of Array Except Self](https://leetcode.com/problems/product-of-array-except-self/description/)
-    </details>
-
-### Specific interview preparation
-
-- [ ]  Try the product, prepare feedback. According to friends conducting interviews at Lovable, many people show up without even having used the product?!
-- [ ]  Ask o3 about the person you're talking to. What do they care about? What have they worked on? What can you bond over?
-- [ ]  Prepare questions you care about
-    <details>
-    <summary>Example questions</summary>
-
-    These are more generic, but you should have some specific to the company.
-    - "I'm used to working independently across the stack, what is that like here?"
-    - "I really want to work somewhere where people spend a lot of time in the office, is that the case here?"
-    - "Let's say we end up working together, what would be above expectation for the first 3 months?"
-    - "What have your best collaborations looked like?"
-    - "What's top of mind for you right now?"
-    - "What has been the reason people have not worked out in [company]?"
-    - "What do you wish you knew about [company] before you started?"
-    - "If you could work on another part of the product, what would it be?"
-    </details>
-- [ ]  Replicate the company's product and understand how it works technically.
-
-### Target dream company
-
-- [ ]  Build relevant demo. [Ideas →](#how-to-come-up-with-demo-ideas)
-- [ ]  Post on X and try to go viral
-- [ ]  DM people there with feedback or that you're open for work.
-
-    <details>
-        <summary>Example DM</summary>
-
-        > hey [name] i previously built @zealy.io from 0 to 1.5M MAU & $2M arr, working across engineering/design/product. love what you're building with [company name] i'm very interested in what design will look like in the future and been experimenting with token studio to bring design & code closer together. are you hiring for product engineers? [here's](https://fredrika.dev) more info
-      </details>
- 
-</ExampleCard>
-
-
-## Getting interviews with a non-traditional background
-
-I haven't studied at any university. Nor worked at a reputable startup. Because of this, I thought getting interviews - and especially an offers - from companies like OpenAI would be impossible. I was wrong.
-
-The most common advice for getting interviews is to improve your resume and then reach out to hiring managers or apply on career pages. This is simply bad advice. I didn't get a single interview from applying directly. You're also likely to face a longer and more difficult interview process going this route.
+The most common advice is to improve your resume and then reach out to hiring managers or apply on career pages. This is simply bad advice. I didn't get a single interview from applying directly. You're also likely to face a longer and more difficult interview process going this route.
 
 Here are methods I tried, ranked from worst to best:
 
@@ -149,6 +38,7 @@ Here are methods I tried, ranked from worst to best:
 - **Warm intros:** When I first visited SF earlier this year, I met a few people. They (and their friends) later introduced me to some fantastic companies. These conversations were also incredibly useful before formally interviewing. They helped me understand what the companies were thinking about, what they valued, and what working there might be like.
 - **Going viral:** The biggest unlock was having a tweet go viral. You don't need a big audience. I had around 500 followers. Post before 10 AM PST, record a short demo (I used [Screen Studio](https://screen.studio/)), and ask a few friends to like/retweet/reply early. If a tweet gets a few thousand impressions with good engagement, it will usually take off.
 
+Once you have interviews lined up, you need to pass them.
 
 ## You get good at interviewing by doing it a lot
 
@@ -180,11 +70,12 @@ Once you have an interview booked, you can make your preparation more specific. 
 
 One more thing: treat the interviewer as a coworker, not an examiner. Ask questions and discuss potential solutions openly. Many challenges are deliberately vague. They're testing whether you can work in ambiguous environments and figure out what to ask.
 
-Now, preparing for interviews is important, but it still depends a bit on luck. Companies are trying to figure out how good you are by simulating work with interviews. But these are random challenges that might not cover what you're uniquely good at. To reduce the luck-factor you can also help the companies understand what you're uniquely good at by creating demos.  
 
-## Demos will get you offers
+## The demo advantage
 
-A demo gives real proof. Something you've built that is obviously impressive, clearly yours, and easy to understand in seconds. In multiple interviews, I started demoing my past projects without being asked. If you get this right, the rest of the process becomes much less scary.
+Preparing for interviews is important, but it still depends on luck. Companies simulate work with random challenges that might not cover what you're uniquely good at. A demo lets you control the narrative.
+
+A demo is real proof. Something you've built that is obviously impressive, clearly yours, and easy to understand in seconds. In multiple interviews, I started demoing my past projects without being asked. If you get this right, the rest of the process becomes much less scary.
 
 ### Concrete examples
 
@@ -219,7 +110,7 @@ If you try to recreate something like Claude Code, you'll spend a lot of time th
 
 That's what happened to me: I started with a bigger, more ambitious project ([ASI](https://asi.review/)). The diff viewer was just one part, but I noticed that's where I kept spending all my energy. So I leaned into it, polished that piece, and that became the thing I shared.
 
-## Multiple offers can 10x your comp
+## Multiple offers can 10x comp
 
 One company increased their offer by 50% when I said I had a competing offer. One added a $600k signing bonus to match another company. There's more wiggle room than you'd expect. Some companies even opened with "this is just a starting point" - they *want* you to negotiate.
 
@@ -249,11 +140,124 @@ Once everyone has made their first bid, let each company know roughly how far th
 - [Levels.fyi video](https://www.youtube.com/watch?v=fyn0CKPuPlA)
 - [Exponent guide](https://www.tryexponent.com/blog/tech-salary-negotiation-guide)
 
-## TL;DR
 
-- Do interviews to get good at them. Most interviews are 80% similar.
-- Career pages are one of the worst ways to get interviews. Viral X posts are one of the best.
-- You can get a 15% salary bump by negotiating well, but a 3-10x from having multiple offers.
-- A good demo is the best way to remove uncertainty from the interview process.
+## What this looked like for me
+
+When I started, I didn't think any of this was possible. People around me encouraged me to try anyway. I'm glad I did.
+
+Over 3 months, I interviewed with 30+ companies and did 70+ interviews. In the end, I had offers from OpenAI, Cursor, Midjourney, ElevenLabs, and Vercel. But when I started, I had no idea what to expect. I'd never interviewed before. This was my plan back then:
+
+<Image src='/itw-plan.png' alt="My interview plan" width={528} height={306} className='p-4 bg-white mx-auto rotate-2' />
+
+I built a database of companies that fit my criteria and ranked them. Then I started at the top, but not the very top. I wanted practice first. Most intros came through a recruiter. Some through founders I DMed on X.
+
+After screening calls with 20+ companies, I picked 5 for full loops. I focused on companies without take-home tests. For questions that went poorly, I added them to flashcards and researched unfamiliar problem spaces using Claude (and my [flashcards MCP](https://x.com/fredrikalindh/status/1962905575051641306)). For some companies, I built demos and sent Looms before calls. The reaction was positive, but not as effective as demos I did later over multiple weeks. During this time, I also started building [ASI](https://asi.review/) because I was interested in the codegen space.
+
+This process felt terrible. I spent days preparing only to get rejected or to find out they needed someone completely different. I'd lie in bed replaying mistakes. I lost my appetite and dropped 3 kilos in two weeks. There were moments I wanted to accept something random and be done with it.
+
+From those 5 companies, I got 2 offers. They wanted a response within a week. But I wanted to try my top-tier companies first.
+
+I got an intro to ElevenLabs through someone I'd talked to once six months earlier. While coworking at the Lovable office, I showed my projects to Matheus from Midjourney. He thought they were cool and shared them on Slack. They asked for a demo, so I built [this one](https://fredrika.dev/docs) in two days. That demo basically got me the offer.
+
+Since it was done, I figured I might as well post about it. I recorded a video, posted at 9 AM PST, and asked friends to comment early. It went viral with over 120k views. The next day I had messages from Cursor, OpenAI, Cognition, and Vercel. I told everyone I had an offer I'd sign unless they could move fast.
+
+What followed was the most intense two weeks of my life. Vercel made an offer the next day. Cognition interviews Sunday–Monday. Cursor trial Tuesday–Wednesday, coding interview Thursday, offer by Monday. Then six OpenAI interviews Monday–Tuesday the following week, offer Wednesday. On Thursday, I signed with Cursor to work on the IDE.
 
 
+<ExampleCard filename="interview-playbook.md">
+## The playbook
+
+<br/>
+
+**General preparation**
+
+- [ ]  Prepare personal pitch.
+    <details>
+    <summary>Example pitch</summary>
+
+    > *i coded & designed professionally since 16. went to the most selective coding school in Europe. ~1% get in. after a year there, i realized i could learn better by building real projects. so I released 9 different apps and became a maker of the year on product hunt 2021*
+
+    > *one of those projects quickly got traction and we went from 0 to 1M MAU in just a few months so we started working full time on that. i worked very much across the stack. we tried a few different constellations, but majority of the time it was me carrying product, design, and frontend alone, while we had 4 backend devs.* 
+
+    > *in the beginning of the year I went to SF and met with my friends working in OpenAI, Midjourney, Cursor, etc., and they told me the things they were working on. I realized that sounded much more interesting. So I left in April, and want to move to SF.*
+    </details>
+- [ ]  Write about two projects you've done and record demo.
+    <details>
+    <summary>Example projects</summary>
+
+    - **[Canvas](https://www.loom.com/share/0d2796ce9bcb42529253adf9fb2a8894):** A collaborative whiteboard with real-time sync, infinite zoom, and custom shape rendering
+    - **[ASI](https://www.loom.com/share/df2e4c54310e4b95933449f0b9f1b9e2):** An AI code review tool with streaming diffs and intelligent suggestions - [live site](https://asi.review/)
+    - **[Fast grid](https://www.loom.com/share/540ad426c22c4db192293babfc9c7fdf):** one of the most performant web tables in production, using Skia with Rust bindings.
+    </details>
+- [ ]  Contact recruiters to get initial interviews
+- [ ]  Do a lot of screening calls (20-50)
+- [ ]  Select 5-10 companies and do full loop, hopefully get at least 2 offers. Do this before interviewing with your dream companies.
+<br/>
+**Technical interview preparation**
+
+- [ ]  Practice example interviews.
+    <details>
+    <summary>Example exercises</summary>
+    - JSON Stringify with circular references serialize & unserialize
+    - Drag & drop infinite canvas from scratch (without libs, minimizing rerenders, use devtools)
+    - Write a basic version of AI SDK from scratch
+    - Stream AI chat to multiple clients at the same time
+    </details>
+- [ ]  Practice system design.
+    <details>
+    <summary>System design resources</summary>
+
+    - [GreatFrontend](https://www.greatfrontend.com/) - Frontend system design questions
+    - [HelloInterview](https://www.hellointerview.com/learn/system-design/in-a-hurry/introduction) - Quick system design guide
+    </details>
+- [ ]  Practice LeetCode.
+    <details>
+    <summary>Example exercises</summary>
+
+    - [Binary Search](https://leetcode.com/problems/binary-search/description/)
+    - [Same Tree](https://leetcode.com/problems/same-tree/description/)
+    - [Longest Substring Without Repeating Characters](https://leetcode.com/problems/longest-substring-without-repeating-characters/description/)
+    - [Binary Tree Inorder Traversal](https://leetcode.com/problems/binary-tree-inorder-traversal/description/)
+    - [Remove Duplicates from Sorted Array](https://leetcode.com/problems/remove-duplicates-from-sorted-array/description/)
+    - [Merge Intervals](https://leetcode.com/problems/merge-intervals/description/)
+    - [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store/description/)
+    - [Product of Array Except Self](https://leetcode.com/problems/product-of-array-except-self/description/)
+    </details>
+<br/>
+**Specific interview preparation**
+
+- [ ]  Try the product, prepare feedback. According to friends conducting interviews at Lovable, many people show up without even having used the product?!
+- [ ]  Ask o3 about the person you're talking to. What do they care about? What have they worked on? What can you bond over?
+- [ ]  Prepare questions you care about
+    <details>
+    <summary>Example questions</summary>
+
+    These are more generic, but you should have some specific to the company.
+    - "I'm used to working independently across the stack, what is that like here?"
+    - "I really want to work somewhere where people spend a lot of time in the office, is that the case here?"
+    - "Let's say we end up working together, what would be above expectation for the first 3 months?"
+    - "What have your best collaborations looked like?"
+    - "What's top of mind for you right now?"
+    - "What has been the reason people have not worked out in [company]?"
+    - "What do you wish you knew about [company] before you started?"
+    - "If you could work on another part of the product, what would it be?"
+    </details>
+- [ ]  Replicate the company's product and understand how it works technically.
+<br/>
+**Target dream company**
+
+- [ ]  Build relevant demo. <Link href="#how-to-come-up-with-demo-ideas">Ideas →</Link>
+- [ ]  Post on X and try to go viral
+- [ ]  DM people there with feedback or that you're open for work.
+
+    <details>
+        <summary>Example DM</summary>
+
+        > hey [name] i previously built @zealy.io from 0 to 1.5M MAU & $2M arr, working across engineering/design/product. love what you're building with [company name] i'm very interested in what design will look like in the future and been experimenting with token studio to bring design & code closer together. are you hiring for product engineers? [here's](https://fredrika.dev) more info
+      </details>
+ 
+</ExampleCard>
+
+---
+
+*Thanks to [Gabriel](https://x.com/gabriel1) for support and the initial strategy :)*
