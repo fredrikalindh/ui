@@ -116,6 +116,25 @@
           "target": "components/ui/button.tsx"
         }
       ]
+    },
+    {
+      "name": "slider",
+      "type": "registry:component",
+      "title": "Slider",
+      "description": "A slider component with label and step marks",
+      "dependencies": ["@radix-ui/react-slider"],
+      "files": [
+        {
+          "path": "registry/ui/slider.tsx",
+          "type": "registry:component",
+          "target": "components/ui/slider.tsx"
+        },
+        {
+          "path": "lib/utils.ts",
+          "type": "registry:lib",
+          "target": "lib/utils.ts"
+        }
+      ]
     }
   ]
 }
