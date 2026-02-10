@@ -118,7 +118,7 @@ const CollapsibleCardContent: React.FC<
       <div
         {...props}
         ref={contentRef}
-        className={cn("max-h-[70svh] pt-14 pb-4 overflow-auto", className)}
+        className={cn("max-h-[70svh] pt-14 pb-4 overflow-auto [scrollbar-width:thin]", className)}
         onScroll={onScroll}
       />
       <Fade
