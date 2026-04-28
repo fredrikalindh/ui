@@ -2,6 +2,7 @@
 
 import { ExperimentCard } from "@/components/experiment-card";
 import { MasonryGrid } from "@/components/masonry-grid";
+import { formatCardDate } from "@/lib/format-card-date";
 import { parseAsString, useQueryState } from "nuqs";
 import { MediaMeta } from "@/registry/ui/video";
 
@@ -13,7 +14,6 @@ interface Page {
   date?: string;
   tags: string[];
   theme?: "light" | "dark";
-  buttonLabel?: string;
   mediaMeta?: MediaMeta;
 }
 
@@ -33,7 +33,7 @@ export function PageContent({ pages }: { pages: Page[] }) {
           <ExperimentCard
             key={page.url}
             name={page.title}
-            date={page.date ?? ""}
+            date={page.date ? formatCardDate(page.date) : ""}
             media={
               page.image
                 ? {
@@ -49,7 +49,6 @@ export function PageContent({ pages }: { pages: Page[] }) {
             url={page.url}
             theme={page.theme ?? "dark"}
             textPosition="top"
-            buttonLabel={page.buttonLabel ?? undefined}
             className={isVisible(page) ? "" : "hidden"}
             priority={index < 6}
           />

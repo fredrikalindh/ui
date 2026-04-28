@@ -28,7 +28,6 @@ const externalProjects = [
     date: "2025-11-01",
     tags: ["Engineering"],
     theme: "light" as const,
-    buttonLabel: "View production",
     mediaMeta: getMediaMeta("/asi.webp"),
   },
   {
@@ -39,7 +38,6 @@ const externalProjects = [
     date: "2025-08-27",
     tags: ["Engineering"],
     theme: "light" as const,
-    buttonLabel: "View production",
     mediaMeta: getMediaMeta("/folder.mp4"),
   },
   {
@@ -50,7 +48,6 @@ const externalProjects = [
     date: "2025-08-11",
     tags: ["Engineering"],
     theme: "dark" as const,
-    buttonLabel: undefined,
     mediaMeta: getMediaMeta("/anywhere.mp4"),
   },
   {
@@ -61,7 +58,6 @@ const externalProjects = [
     date: "2025-07-21",
     tags: ["Engineering"],
     theme: "light" as const,
-    buttonLabel: undefined,
     mediaMeta: getMediaMeta("/agape.webp"),
   },
 ];
@@ -87,7 +83,6 @@ export default function Home() {
     date: page.data.date,
     tags: page.data.tags,
     theme: page.data.theme,
-    buttonLabel: page.data.buttonLabel,
     mediaMeta: page.data.image ? getMediaMeta(page.data.image) : undefined,
   }));
 

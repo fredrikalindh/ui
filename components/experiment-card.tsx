@@ -1,13 +1,11 @@
 import {
   Card,
   CardContent,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/registry/ui/card";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/registry/ui/button";
 import { VideoWithPlaceholder, MediaMeta } from "@/registry/ui/video";
 import Image from "next/image";
 import { motion } from "motion/react";
@@ -24,7 +22,6 @@ interface ExperimentCardProps {
     meta?: MediaMeta;
   };
   url?: string;
-  buttonLabel?: string;
   className?: string;
   style?: React.CSSProperties;
   theme?: "dark" | "light";
@@ -81,7 +78,6 @@ export function ExperimentCard({
   textPosition = "bottom",
   media,
   url,
-  buttonLabel,
   className,
   style,
   theme = "light",
@@ -110,18 +106,6 @@ export function ExperimentCard({
         </CardHeader>
         {media && <Media media={media} priority={priority} />}
       </CardContent>
-
-      {buttonLabel && url && (
-        <CardFooter className="w-full p-0">
-          <Button
-            variant="secondary"
-            size="lg"
-            className="w-full group-hover/link:bg-secondary/80 transition-colors pointer-events-none"
-          >
-            {buttonLabel}
-          </Button>
-        </CardFooter>
-      )}
     </>
   );
 
@@ -136,12 +120,7 @@ export function ExperimentCard({
         )}
         style={style}
       >
-        <Card
-          className={cn(
-            "flex flex-col cursor-pointer w-full h-auto",
-            buttonLabel ? "p-1" : "p-0"
-          )}
-        >
+        <Card className="flex flex-col cursor-pointer w-full h-auto p-0">
           {cardContent}
         </Card>
       </motion.a>

@@ -39,7 +39,6 @@ export const docs = defineDocs({
       image: z.string().optional(),
       date: z.string().optional(),
       theme: z.enum(["light", "dark"]).optional(),
-      buttonLabel: z.string().optional(),
     }),
   },
 });
