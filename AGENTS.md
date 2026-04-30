@@ -22,4 +22,4 @@ pnpm 10 blocks native dependency build scripts by default. The `pnpm.onlyBuiltDe
 
 ### Pre-commit hook
 
-Husky runs `scripts/generate-media-metadata.mjs` on commit and auto-stages `public/media-metadata.json`.
+Husky runs `scripts/generate-media-metadata.mjs` on commit and auto-stages `public/media-metadata.json`. The script uses macOS `sips` for image dimensions, which is not available on Linux. On Linux, only video metadata (via `ffprobe`) is generated; image entries will have null dimensions. This is harmless for development but means `public/media-metadata.json` changes on Linux should not be committed to avoid losing image metadata. Consider using `git checkout -- public/media-metadata.json` after commits if the diff is undesirable.
