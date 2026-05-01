@@ -58,7 +58,7 @@ The generated payloads in `public/r/` are automatically included in your deploym
 ## Testing
 
 ```bash
-# Run tests
+# Run the tests
 pnpm test
 
 # Run tests in watch mode
