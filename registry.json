@@ -130,6 +130,20 @@
           "target": "components/ui/select.tsx"
         }
       ]
+    },
+    {
+      "name": "hover-card",
+      "type": "registry:component",
+      "title": "Hover Card",
+      "description": "Preview content that appears on hover",
+      "dependencies": ["@radix-ui/react-hover-card"],
+      "files": [
+        {
+          "path": "registry/ui/hover-card.tsx",
+          "type": "registry:component",
+          "target": "components/ui/hover-card.tsx"
+        }
+      ]
     }
   ]
 }
