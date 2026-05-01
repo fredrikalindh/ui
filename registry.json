@@ -144,6 +144,20 @@
           "target": "components/ui/hover-card.tsx"
         }
       ]
+    },
+    {
+      "name": "dropdown",
+      "type": "registry:component",
+      "title": "Dropdown",
+      "description": "Native details-based dropdown menu",
+      "dependencies": ["lucide-react"],
+      "files": [
+        {
+          "path": "registry/ui/dropdown.tsx",
+          "type": "registry:component",
+          "target": "components/ui/dropdown.tsx"
+        }
+      ]
     }
   ]
 }
