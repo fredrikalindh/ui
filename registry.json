@@ -116,6 +116,19 @@
           "target": "components/ui/button.tsx"
         }
       ]
+    },
+    {
+      "name": "input",
+      "type": "registry:component",
+      "title": "Input",
+      "description": "A text input component",
+      "files": [
+        {
+          "path": "registry/ui/input.tsx",
+          "type": "registry:component",
+          "target": "components/ui/input.tsx"
+        }
+      ]
     }
   ]
 }
