@@ -1,0 +1,15 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "skeleton",
+  "type": "registry:component",
+  "title": "Skeleton",
+  "description": "Placeholder loading state component",
+  "files": [
+    {
+      "path": "registry/ui/skeleton.tsx",
+      "content": "import * as React from \"react\";\n\nimport { cn } from \"@/lib/utils\";\n\nfunction Skeleton({ className, ...props }: React.ComponentProps<\"div\">) {\n  return (\n    <div\n      data-slot=\"skeleton\"\n      className={cn(\"bg-accent animate-pulse rounded-md\", className)}\n      {...props}\n    />\n  );\n}\n\nexport { Skeleton };\n",
+      "type": "registry:component",
+      "target": "components/ui/skeleton.tsx"
+    }
+  ]
+}

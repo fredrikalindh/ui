@@ -4,6 +4,19 @@
   "homepage": "https://ui.fredrika.dev",
   "items": [
     {
+      "name": "skeleton",
+      "type": "registry:component",
+      "title": "Skeleton",
+      "description": "Placeholder loading state component",
+      "files": [
+        {
+          "path": "registry/ui/skeleton.tsx",
+          "type": "registry:component",
+          "target": "components/ui/skeleton.tsx"
+        }
+      ]
+    },
+    {
       "name": "diff-viewer",
       "type": "registry:component",
       "title": "Diff Viewer",
