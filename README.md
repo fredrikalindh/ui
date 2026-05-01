@@ -15,6 +15,8 @@ Add any component to your project using the shadcn CLI:
 npx shadcn@latest add https://ui.fredrika.dev/r/<name>.json
 ```
 
+Browse the docs for examples before adding components to an app.
+
 Check [registry.json](registry.json) for the complete list of available components.
 
 
