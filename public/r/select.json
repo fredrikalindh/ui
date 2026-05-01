@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "select",
+  "type": "registry:component",
+  "title": "Select",
+  "description": "Native select input with project styling",
+  "dependencies": [
+    "lucide-react"
+  ],
+  "files": [
+    {
+      "path": "registry/ui/select.tsx",
+      "content": "import * as React from \"react\";\nimport { ChevronDownIcon } from \"lucide-react\";\n\nimport { cn } from \"@/lib/utils\";\n\nfunction Select({\n  className,\n  children,\n  ...props\n}: React.ComponentProps<\"select\">) {\n  return (\n    <div data-slot=\"select-wrapper\" className=\"relative w-full\">\n      <select\n        data-slot=\"select\"\n        className={cn(\n          \"border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 flex h-9 w-full appearance-none rounded-md border bg-transparent px-3 py-1 pr-8 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 md:text-sm\",\n          className\n        )}\n        {...props}\n      >\n        {children}\n      </select>\n      <ChevronDownIcon\n        data-slot=\"select-icon\"\n        className=\"text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 opacity-50\"\n      />\n    </div>\n  );\n}\n\nexport { Select };\n",
+      "type": "registry:component",
+      "target": "components/ui/select.tsx"
+    }
+  ]
+}
