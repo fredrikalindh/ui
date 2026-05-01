@@ -14,10 +14,8 @@ type PreviewProps = {
   initialOptions?: Partial<ParseOptions>;
 };
 
-const EXPANDED_WIDTH = 400;
 const EXPANDED_HEIGHT = 225;
 const EXPANDED_HEIGHT_WORD_DIFF = 48;
-const COLLAPSED_WIDTH = 220;
 const COLLAPSED_HEIGHT = 50;
 
 export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
@@ -75,18 +73,16 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
 
       <motion.div
         className={cn(
-          "flex flex-col gap-2 max-w-md mx-auto absolute bottom-2 left-0 right-0 rounded-xl shadow-2xl z-100",
+          "flex flex-col gap-2 mx-auto absolute bottom-2 left-2 right-2 rounded-xl shadow-2xl z-100",
           {
             "p-4 border overflow-hidden bg-card/40 backdrop-blur-sm":
               !initialOptions?.wordDiff,
           }
         )}
         initial={{
-          width: COLLAPSED_WIDTH,
           height: COLLAPSED_HEIGHT,
         }}
         animate={{
-          width: mergeModifiedLines ? EXPANDED_WIDTH : COLLAPSED_WIDTH,
           height: mergeModifiedLines
             ? initialOptions?.wordDiff
               ? EXPANDED_HEIGHT_WORD_DIFF
@@ -133,7 +129,7 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
             onValueChange={(value) => setMaxChangeRatio(value[0])}
             disabled={!mergeModifiedLines}
             label="Change ratio"
-            className="min-w-[360px]"
+            className="w-full"
           />
 
           {!initialOptions?.wordDiff && (
@@ -146,7 +142,7 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
               onValueChange={(value) => setMaxDiffDistance(value[0])}
               disabled={!mergeModifiedLines}
               label="Diff distance"
-              className="min-w-[360px]"
+              className="w-full"
             />
           )}
 
@@ -160,7 +156,7 @@ export function DiffOptionsPreview({ patch, initialOptions }: PreviewProps) {
               onValueChange={(value) => setInlineMaxCharEdits(value[0])}
               disabled={!mergeModifiedLines}
               label="Char edits"
-              className="min-w-[360px]"
+              className="w-full"
             />
           )}
         </motion.div>

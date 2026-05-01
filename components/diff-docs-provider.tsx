@@ -84,7 +84,7 @@ function DiffDocsPaneRenderer() {
   const options = getOptionsFromSrc(activePreview?.src);
 
   return (
-    <div className="h-full w-full bg-muted p-2 lg:px-6">
+    <div className="h-full min-h-80 w-full bg-muted p-2 lg:px-6 flex flex-col">
       <DiffOptionsPreview patch={EXAMPLE_DIFF} initialOptions={options} />
     </div>
   );
