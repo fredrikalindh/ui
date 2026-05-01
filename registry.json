@@ -116,6 +116,19 @@
           "target": "components/ui/button.tsx"
         }
       ]
+    },
+    {
+      "name": "skeleton",
+      "type": "registry:component",
+      "title": "Skeleton",
+      "description": "Displays a placeholder while content loads",
+      "files": [
+        {
+          "path": "registry/ui/skeleton.tsx",
+          "type": "registry:component",
+          "target": "components/ui/skeleton.tsx"
+        }
+      ]
     }
   ]
 }
