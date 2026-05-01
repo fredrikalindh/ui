@@ -116,6 +116,20 @@
           "target": "components/ui/button.tsx"
         }
       ]
+    },
+    {
+      "name": "select",
+      "type": "registry:component",
+      "title": "Select",
+      "description": "Native select input with project styling",
+      "dependencies": ["lucide-react"],
+      "files": [
+        {
+          "path": "registry/ui/select.tsx",
+          "type": "registry:component",
+          "target": "components/ui/select.tsx"
+        }
+      ]
     }
   ]
 }
