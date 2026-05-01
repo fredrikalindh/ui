@@ -116,6 +116,19 @@
           "target": "components/ui/button.tsx"
         }
       ]
+    },
+    {
+      "name": "textarea",
+      "type": "registry:component",
+      "title": "Textarea",
+      "description": "UI textarea component",
+      "files": [
+        {
+          "path": "registry/ui/textarea.tsx",
+          "type": "registry:component",
+          "target": "components/ui/textarea.tsx"
+        }
+      ]
     }
   ]
 }
