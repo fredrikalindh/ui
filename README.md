@@ -4,6 +4,8 @@ A curated collection of reusable UI components built with React, TypeScript, and
 
 🌐 **[Visit the docs](https://ui.fredrika.dev/docs)**
 
+Fun note: Components are reusable because copy-paste deserves a vacation.
+
 
 ## Quick Start
 
