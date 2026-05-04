@@ -41,7 +41,7 @@ The site will be available at `http://localhost:3000`.
 ├── components/      # Documentation site UI components
 ├── app/             # Next.js App Router pages
 └── public/
-    └── r/           # Generated registry JSON payloads (build artifacts)
+    └── r/           # Generated registry JSON payloads (tiny treasure maps)
 ```
 
 ## Contributing
