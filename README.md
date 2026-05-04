@@ -64,3 +64,7 @@ pnpm test
 # Run tests in watch mode
 pnpm test:watch
 ```
+
+## Just for fun
+
+Why did the React component bring a ladder to the sprint review? It heard the state was getting lifted.
