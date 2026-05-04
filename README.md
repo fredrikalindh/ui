@@ -64,3 +64,7 @@ pnpm test
 # Run tests in watch mode
 pnpm test:watch
 ```
+
+## Joke of the Day
+
+Why do UI components make great friends? They always know how to react.
