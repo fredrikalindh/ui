@@ -2,6 +2,8 @@
 
 A curated collection of reusable UI components built with React, TypeScript, and Tailwind CSS. Install components directly into your project with the shadcn CLI.
 
+No pixels were harmed in the making of this registry.
+
 🌐 **[Visit the docs](https://ui.fredrika.dev/docs)**
 
 
