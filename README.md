@@ -29,6 +29,8 @@ pnpm dev
 
 The site will be available at `http://localhost:3000`.
 
+If the dev server gets grumpy, try turning it off and on again politely.
+
 ## Project Structure
 
 ```
