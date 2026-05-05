@@ -1,6 +1,6 @@
 # UI Registry
 
-A curated collection of reusable UI components built with React, TypeScript, and Tailwind CSS. Install components directly into your project with the shadcn CLI.
+A curated registry of reusable UI components built with React, TypeScript, and Tailwind CSS. Install components directly into your project with the shadcn CLI.
 
 🌐 **[Visit the docs](https://ui.fredrika.dev/docs)**
 
@@ -9,13 +9,13 @@ A curated collection of reusable UI components built with React, TypeScript, and
 
 ### Install from the Registry
 
-Add any component to your project using the shadcn CLI:
+Add a component to your project using the shadcn CLI:
 
 ```bash
 npx shadcn@latest add https://ui.fredrika.dev/r/<name>.json
 ```
 
-Check [registry.json](registry.json) for the complete list of available components.
+Replace `<name>` with a component name from [registry.json](registry.json).
 
 
 ## Local Development
@@ -27,7 +27,7 @@ pnpm install
 pnpm dev
 ```
 
-The site will be available at `http://localhost:3000`.
+Then open `http://localhost:3000`. Coffee is optional, but highly recommended.
 
 ## Project Structure
 
@@ -50,8 +50,8 @@ The site will be available at `http://localhost:3000`.
 
 1. Create your component in `registry/ui/`
 2. Add an entry to `registry.json` with metadata and dependencies
-4. Add documentation in `content/docs/`
-5. Build the registry to generate JSON payloads
+3. Add documentation in `content/docs/`
+4. Build the registry to generate JSON payloads
 
 The generated payloads in `public/r/` are automatically included in your deployment, allowing consumers to install components via the shadcn CLI.
 
