@@ -28,6 +28,7 @@ pnpm dev
 ```
 
 The site will be available at `http://localhost:3000`.
+Coffee is optional, but highly recommended.
 
 ## Project Structure
 
