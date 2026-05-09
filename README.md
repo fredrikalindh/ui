@@ -1,66 +1,71 @@
 # UI Registry
 
-A curated collection of reusable UI components built with React, TypeScript, and Tailwind CSS. Install components directly into your project with the shadcn CLI.
+A [shadcn-style component registry](https://ui.shadcn.com/docs/registry): reusable React components (TypeScript and Tailwind CSS), plus a Next.js app that hosts documentation and the JSON install endpoints published at [ui.fredrika.dev](https://ui.fredrika.dev).
 
-🌐 **[Visit the docs](https://ui.fredrika.dev/docs)**
+**Documentation:** [ui.fredrika.dev/docs](https://ui.fredrika.dev/docs)
 
+## Install a component
 
-## Quick Start
-
-### Install from the Registry
-
-Add any component to your project using the shadcn CLI:
+Add a component to your project with the shadcn CLI. Use each item's `name` from [`registry.json`](registry.json) in place of `<name>` (for example, `diff-viewer`):
 
 ```bash
 npx shadcn@latest add https://ui.fredrika.dev/r/<name>.json
 ```
 
-Check [registry.json](registry.json) for the complete list of available components.
+See [`registry.json`](registry.json) for the full list of components and their metadata.
 
+## Local development
 
-## Local Development
-
-### Setup
+This repository uses [pnpm](https://pnpm.io/) (`pnpm-lock.yaml` is the lockfile).
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-The site will be available at `http://localhost:3000`.
+The site runs at [http://localhost:3000](http://localhost:3000). Documentation is served under `/docs`.
 
-## Project Structure
+## Project structure
 
 ```
 .
 ├── registry/
-│   ├── ui/          # Source components shipped to consumers
-│   └── blocks/      # Example implementations and demos
+│   ├── ui/          # Components shipped to consumers via the registry
+│   └── blocks/      # Examples and demos referenced from registry items
 ├── content/
-│   └── docs/        # MDX documentation files
-├── components/      # Documentation site UI components
-├── app/             # Next.js App Router pages
-└── public/
-    └── r/           # Generated registry JSON payloads (build artifacts)
+│   └── docs/        # MDX documentation
+├── components/      # UI for the Next.js site and docs
+├── app/             # Next.js App Router (home, docs routes)
+├── public/
+│   └── r/           # Registry JSON for CLI installs (see below)
+├── registry.json    # Registry definition (source for `pnpm registry:build`)
+└── scripts/         # Repository tooling (for example, media metadata generation)
 ```
+
+## Registry build output
+
+After you change [`registry.json`](registry.json) or files under `registry/`, regenerate the JSON under `public/r/`:
+
+```bash
+pnpm registry:build
+```
+
+Commit updated files in `public/r/` when they change so installs keep working against the live URLs (`https://ui.fredrika.dev/r/<name>.json`).
 
 ## Contributing
 
-### Adding a New Component
+### Adding or updating a component
 
-1. Create your component in `registry/ui/`
-2. Add an entry to `registry.json` with metadata and dependencies
-4. Add documentation in `content/docs/`
-5. Build the registry to generate JSON payloads
-
-The generated payloads in `public/r/` are automatically included in your deployment, allowing consumers to install components via the shadcn CLI.
+1. Add or edit source under `registry/ui/` (and related `registry/blocks/` examples if needed).
+2. Update the matching entry in [`registry.json`](registry.json) (paths, dependencies, `registryDependencies`, etc.).
+3. Add or update documentation in `content/docs/`.
+4. Run `pnpm registry:build` and commit any changes under `public/r/`.
+5. Run `pnpm test` and `pnpm lint` before opening a pull request.
 
 ## Testing
 
 ```bash
-# Run tests
-pnpm test
-
-# Run tests in watch mode
-pnpm test:watch
+pnpm test          # Run the suite once (Vitest)
+pnpm test:watch    # Watch mode
+pnpm test:ui       # Vitest UI
 ```
