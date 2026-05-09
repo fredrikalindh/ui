@@ -1,26 +1,25 @@
 # UI Registry
 
-A curated collection of reusable UI components built with React, TypeScript, and Tailwind CSS. Install components directly into your project with the shadcn CLI.
+A curated collection of reusable UI components built with React, TypeScript,
+and Tailwind CSS. Components can be installed into other projects with the
+shadcn CLI.
 
-🌐 **[Visit the docs](https://ui.fredrika.dev/docs)**
+**Docs:** [ui.fredrika.dev/docs](https://ui.fredrika.dev/docs)
 
+## Quick start
 
-## Quick Start
-
-### Install from the Registry
-
-Add any component to your project using the shadcn CLI:
+Install a component from the registry with the shadcn CLI:
 
 ```bash
 npx shadcn@latest add https://ui.fredrika.dev/r/<name>.json
 ```
 
-Check [registry.json](registry.json) for the complete list of available components.
+Replace `<name>` with a component name from
+[`registry.json`](registry.json).
 
+## Local development
 
-## Local Development
-
-### Setup
+Install dependencies and start the documentation site:
 
 ```bash
 pnpm install
@@ -29,9 +28,19 @@ pnpm dev
 
 The site will be available at `http://localhost:3000`.
 
-## Project Structure
+Useful commands:
 
+```bash
+pnpm dev             # Start the local development server
+pnpm build           # Build the Next.js site
+pnpm registry:build  # Generate registry payloads in public/r/
+pnpm test            # Run tests once
+pnpm test:watch      # Run tests in watch mode
 ```
+
+## Project structure
+
+```text
 .
 ├── registry/
 │   ├── ui/          # Source components shipped to consumers
@@ -46,21 +55,26 @@ The site will be available at `http://localhost:3000`.
 
 ## Contributing
 
-### Adding a New Component
+### Adding a component
 
-1. Create your component in `registry/ui/`
-2. Add an entry to `registry.json` with metadata and dependencies
-4. Add documentation in `content/docs/`
-5. Build the registry to generate JSON payloads
+1. Create the component in `registry/ui/`.
+2. Add an entry to `registry.json` with its metadata and dependencies.
+3. Add documentation in `content/docs/`.
+4. Run `pnpm registry:build` to generate the JSON payloads in `public/r/`.
 
-The generated payloads in `public/r/` are automatically included in your deployment, allowing consumers to install components via the shadcn CLI.
+The generated payloads in `public/r/` are included in deployment so consumers
+can install components through the shadcn CLI.
 
 ## Testing
 
-```bash
-# Run tests
-pnpm test
+Run the test suite once:
 
-# Run tests in watch mode
+```bash
+pnpm test
+```
+
+Run tests in watch mode while developing:
+
+```bash
 pnpm test:watch
 ```
