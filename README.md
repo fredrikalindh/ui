@@ -1,66 +1,67 @@
 # UI Registry
 
-A curated collection of reusable UI components built with React, TypeScript, and Tailwind CSS. Install components directly into your project with the shadcn CLI.
+A **shadcn-style component registry** and documentation site: reusable React UI (TypeScript, Tailwind CSS) that others can install with the shadcn CLI, plus a Next.js app that hosts the docs and demos.
 
-🌐 **[Visit the docs](https://ui.fredrika.dev/docs)**
+**Documentation:** [ui.fredrika.dev/docs](https://ui.fredrika.dev/docs)
 
 
-## Quick Start
+## Install components in your project
 
-### Install from the Registry
-
-Add any component to your project using the shadcn CLI:
+Use the shadcn CLI and point at this registry’s JSON URLs:
 
 ```bash
 npx shadcn@latest add https://ui.fredrika.dev/r/<name>.json
 ```
 
-Check [registry.json](registry.json) for the complete list of available components.
+Replace `<name>` with a component id. See [registry.json](registry.json) for all entries.
 
 
-## Local Development
+## Run this repo locally
 
-### Setup
+**Prerequisites:** [Node.js](https://nodejs.org/) and [pnpm](https://pnpm.io/) (this project uses a `pnpm` lockfile and scripts).
 
-```bash
-pnpm install
-pnpm dev
-```
+| Command | What it does |
+|--------|----------------|
+| `pnpm install` | Install dependencies |
+| `pnpm dev` | Dev server ([Turbopack](https://nextjs.org/docs/app/api-reference/next-config-js/turbopack)) at http://localhost:3000 |
+| `pnpm build` | Production build (Next.js) |
+| `pnpm start` | Serve the production build |
+| `pnpm lint` | ESLint via Next.js |
+| `pnpm test` | Run tests once (Vitest) |
+| `pnpm test:watch` | Vitest in watch mode |
+| `pnpm test:ui` | Vitest with UI |
+| `pnpm registry:build` | Regenerate registry payloads (`shadcn build` → `public/r/`) |
 
-The site will be available at `http://localhost:3000`.
+**Stack (high level):** Next.js, React 19, TypeScript, Tailwind CSS 4, Fumadocs (MDX docs), Vitest.
 
-## Project Structure
+
+## Repository layout
 
 ```
 .
 ├── registry/
-│   ├── ui/          # Source components shipped to consumers
-│   └── blocks/      # Example implementations and demos
+│   ├── ui/          # Source components for the registry
+│   └── blocks/      # Example pages / demos
 ├── content/
-│   └── docs/        # MDX documentation files
-├── components/      # Documentation site UI components
-├── app/             # Next.js App Router pages
+│   └── docs/        # MDX documentation
+├── components/      # Site-only UI for the docs app
+├── app/             # Next.js App Router
 └── public/
-    └── r/           # Generated registry JSON payloads (build artifacts)
+    └── r/           # Generated registry JSON (build artifact)
 ```
 
-## Contributing
 
-### Adding a New Component
+## Contributing a component
 
-1. Create your component in `registry/ui/`
-2. Add an entry to `registry.json` with metadata and dependencies
-4. Add documentation in `content/docs/`
-5. Build the registry to generate JSON payloads
+1. Add or update source under `registry/ui/`.
+2. Add an item to [registry.json](registry.json) (metadata, dependencies, file paths).
+3. Add or update docs in `content/docs/`.
+4. Run `pnpm registry:build` so `public/r/` stays in sync for installs and deploys.
 
-The generated payloads in `public/r/` are automatically included in your deployment, allowing consumers to install components via the shadcn CLI.
 
 ## Testing
 
 ```bash
-# Run tests
 pnpm test
-
-# Run tests in watch mode
 pnpm test:watch
 ```
