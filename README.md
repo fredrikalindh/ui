@@ -1,13 +1,17 @@
 # UI Registry
 
-A curated collection of reusable UI components built with React, TypeScript, and Tailwind CSS. Install components directly into your project with the shadcn CLI.
+**UI Registry** is a curated collection of reusable UI components (React, TypeScript, Tailwind CSS) published as a shadcn-compatible registry. Consumers install components with the shadcn CLI; this repository is also the Next.js app and build pipeline that serves the public registry and documentation.
+
+| Audience | What you do here |
+| -------- | ---------------- |
+| **Consumers** | Add components to your app using the install URL pattern below. Browse [registry.json](registry.json) for available components. |
+| **Contributors** | Clone the repo, run local dev, change files under `registry/`, update `registry.json`, add docs, build artifacts into `public/r/`. |
 
 🌐 **[Visit the docs](https://ui.fredrika.dev/docs)**
 
+## Quick start (consumers)
 
-## Quick Start
-
-### Install from the Registry
+### Install from the registry
 
 Add any component to your project using the shadcn CLI:
 
@@ -17,10 +21,9 @@ npx shadcn@latest add https://ui.fredrika.dev/r/<name>.json
 
 Check [registry.json](registry.json) for the complete list of available components.
 
+## Contributors
 
-## Local Development
-
-### Setup
+### Local development
 
 ```bash
 pnpm install
@@ -29,7 +32,7 @@ pnpm dev
 
 The site will be available at `http://localhost:3000`.
 
-## Project Structure
+### Project structure
 
 ```
 .
@@ -44,18 +47,16 @@ The site will be available at `http://localhost:3000`.
     └── r/           # Generated registry JSON payloads (build artifacts)
 ```
 
-## Contributing
-
-### Adding a New Component
+### Adding a new component
 
 1. Create your component in `registry/ui/`
 2. Add an entry to `registry.json` with metadata and dependencies
-4. Add documentation in `content/docs/`
-5. Build the registry to generate JSON payloads
+3. Add documentation in `content/docs/`
+4. Build the registry to generate JSON payloads
 
 The generated payloads in `public/r/` are automatically included in your deployment, allowing consumers to install components via the shadcn CLI.
 
-## Testing
+### Testing
 
 ```bash
 # Run tests
