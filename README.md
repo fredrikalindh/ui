@@ -1,66 +1,61 @@
 # UI Registry
 
-A curated collection of reusable UI components built with React, TypeScript, and Tailwind CSS. Install components directly into your project with the shadcn CLI.
+A **shadcn/ui-compatible component registry**: reusable React UI in TypeScript and Tailwind CSS, plus a Next.js docs site where they are documented and previewed. Consumers install components into their own projects with the shadcn CLI.
 
-🌐 **[Visit the docs](https://ui.fredrika.dev/docs)**
+🌐 **Docs:** https://ui.fredrika.dev/docs
 
+## Prerequisites
 
-## Quick Start
+- A recent Node.js release (matching this repo’s Next.js version).
+- **[pnpm](https://pnpm.io/)** — installs and scripts are pinned to this package manager (`pnpm-lock.yaml`).
 
-### Install from the Registry
+## Use the registry from your project
 
-Add any component to your project using the shadcn CLI:
+Pick a component **slug** from the `name` field of each entry in [`registry.json`](registry.json) (for example `button`, `diff-viewer`), then run:
 
 ```bash
-npx shadcn@latest add https://ui.fredrika.dev/r/<name>.json
+npx shadcn@latest add https://ui.fredrika.dev/r/button.json
 ```
 
-Check [registry.json](registry.json) for the complete list of available components.
+Replace `button` with the slug you want. The CLI fetches that JSON endpoint and merges the component into your app.
 
-
-## Local Development
-
-### Setup
+## Work on this repository
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-The site will be available at `http://localhost:3000`.
+The documentation site is served at `http://localhost:3000`.
 
-## Project Structure
+Useful scripts (see `package.json` for the full list):
+
+- **`pnpm build`** — production Next.js build.
+- **`pnpm start`** — run the production server after a build.
+- **`pnpm lint`** — ESLint.
+- **`pnpm test`** / **`pnpm test:watch`** — Vitest.
+- **`pnpm registry:build`** — runs `shadcn build` and regenerates the JSON files under `public/r/` from `registry.json`.
+
+## Project layout
 
 ```
 .
 ├── registry/
-│   ├── ui/          # Source components shipped to consumers
-│   └── blocks/      # Example implementations and demos
+│   ├── ui/          # Component source intended for consumers
+│   └── blocks/      # Demos and example implementations
 ├── content/
-│   └── docs/        # MDX documentation files
-├── components/      # Documentation site UI components
-├── app/             # Next.js App Router pages
+│   └── docs/        # MDX documentation
+├── components/      # Docs site–only UI
+├── app/             # Next.js App Router
 └── public/
-    └── r/           # Generated registry JSON payloads (build artifacts)
+    └── r/           # Published registry JSON (output of `pnpm registry:build`)
 ```
 
-## Contributing
+## Contributing a new component
 
-### Adding a New Component
+1. Implement the component under `registry/ui/` (and optional demos under `registry/blocks/`).
+2. Add an item to [`registry.json`](registry.json) with paths, dependencies, and metadata.
+3. Add or update documentation in `content/docs/`.
+4. Run **`pnpm registry:build`** so `public/r/` stays in sync for local checks and deployment.
 
-1. Create your component in `registry/ui/`
-2. Add an entry to `registry.json` with metadata and dependencies
-4. Add documentation in `content/docs/`
-5. Build the registry to generate JSON payloads
-
-The generated payloads in `public/r/` are automatically included in your deployment, allowing consumers to install components via the shadcn CLI.
-
-## Testing
-
-```bash
-# Run tests
-pnpm test
-
-# Run tests in watch mode
-pnpm test:watch
-```
+After deploy, consumers install the new component using the same URL pattern as above, with the new slug in place of the filename (for example `https://ui.fredrika.dev/r/my-component.json`).
