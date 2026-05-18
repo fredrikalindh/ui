@@ -6,6 +6,7 @@ type Config = {
   installationType: "cli" | "manual"
 }
 
+// Persisted in localStorage so package-manager preference survives reloads.
 const configAtom = atomWithStorage<Config>("config", {
   packageManager: "pnpm",
   installationType: "cli",
