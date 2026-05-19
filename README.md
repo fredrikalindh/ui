@@ -1,24 +1,42 @@
 # UI Registry
 
-A curated collection of reusable UI components built with React, TypeScript, and Tailwind CSS. Install components directly into your project with the shadcn CLI.
+A small, opinionated collection of reusable React UI components — published as a [shadcn](https://ui.shadcn.com)-compatible registry and documented at **[ui.fredrika.dev](https://ui.fredrika.dev/docs)**.
 
-🌐 **[Visit the docs](https://ui.fredrika.dev/docs)**
+The repository is two things at once:
 
+1. **A shadcn registry** — the source of truth for components lives in `registry/`, and `shadcn build` emits installable JSON payloads to `public/r/`.
+2. **A Next.js docs site** that consumes those same components to render demos and MDX documentation.
 
-## Quick Start
+Built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, and [Fumadocs](https://fumadocs.dev/) for MDX.
 
-### Install from the Registry
+## Installing components in your own project
 
-Add any component to your project using the shadcn CLI:
+You don't need to clone this repo to use the components. From any project that has the [shadcn CLI](https://ui.shadcn.com/docs/cli) configured, run:
 
 ```bash
 npx shadcn@latest add https://ui.fredrika.dev/r/<name>.json
 ```
 
-Check [registry.json](registry.json) for the complete list of available components.
+Components currently published (see [`registry.json`](registry.json) for the source of truth):
 
+| Name              | Description                                              |
+| ----------------- | -------------------------------------------------------- |
+| `button`          | Base UI button.                                          |
+| `copy-button`     | Copy-to-clipboard button.                                |
+| `collapsible-card`| Collapsible container with header and content.          |
+| `diff-viewer`     | Unified diff viewer with grouping/word-diff heuristics. |
 
-## Local Development
+Some components depend on others in the registry (for example, `diff-viewer` pulls in `collapsible-card`, which pulls in `copy-button`); the shadcn CLI resolves those automatically.
+
+## Local development
+
+### Prerequisites
+
+- **Node.js** ≥ 20 (matches `@types/node` ^20 used in this repo).
+- **[pnpm](https://pnpm.io/)** — this repo ships a `pnpm-lock.yaml` and uses pnpm overrides; other package managers are not supported.
+- Optional, only needed if you regenerate media metadata (see [Media metadata](#media-metadata-pre-commit-hook)):
+  - `ffmpeg` / `ffprobe` for videos.
+  - `sips` for images (macOS only; the script uses `sips` directly).
 
 ### Setup
 
@@ -27,40 +45,115 @@ pnpm install
 pnpm dev
 ```
 
-The site will be available at `http://localhost:3000`.
+The site runs at <http://localhost:3000> with Turbopack. `pnpm install` also runs `husky` via the `prepare` script to install the pre-commit hook.
 
-## Project Structure
+### Common scripts
+
+| Command                       | What it does                                                                 |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| `pnpm dev`                    | Start the Next.js dev server (Turbopack) on port 3000.                       |
+| `pnpm build`                  | Production Next.js build.                                                    |
+| `pnpm start`                  | Run the production build locally.                                            |
+| `pnpm lint`                   | Lint with `next lint` (`next/core-web-vitals` + `next/typescript`).          |
+| `pnpm test`                   | Run the Vitest suite once.                                                   |
+| `pnpm test:watch`             | Vitest in watch mode.                                                        |
+| `pnpm test:ui`                | Vitest with the `@vitest/ui` web UI.                                         |
+| `pnpm registry:build`         | Run `shadcn build` to regenerate the JSON files in `public/r/`.              |
+| `pnpm generate:media-meta`    | Regenerate `public/media-metadata.json` (aspect ratios + blur placeholders). |
+
+## Project structure
 
 ```
 .
-├── registry/
-│   ├── ui/          # Source components shipped to consumers
-│   └── blocks/      # Example implementations and demos
+├── app/                    # Next.js App Router (docs site + landing page)
+│   ├── docs/[[...slug]]/   # MDX-driven docs routes
+│   ├── globals.css         # Tailwind v4 + theme variables
+│   └── layout.tsx, page.tsx
+├── components/             # Site-only UI (theme toggle, MDX components, etc.)
+│   └── ui/                 # Local copies used by the docs site
 ├── content/
-│   └── docs/        # MDX documentation files
-├── components/      # Documentation site UI components
-├── app/             # Next.js App Router pages
-└── public/
-    └── r/           # Generated registry JSON payloads (build artifacts)
+│   └── docs/               # MDX documentation source
+├── hooks/                  # Shared React hooks used by the site
+├── lib/                    # Shared utilities (source loader, code highlighting, ...)
+├── registry/               # Source of truth for published components
+│   ├── ui/                 # The components themselves (button, diff, ...)
+│   └── blocks/             # Example pages / demos for components
+├── public/
+│   ├── r/                  # Generated registry payloads (output of `shadcn build`)
+│   └── media-metadata.json # Generated by the pre-commit hook
+├── scripts/
+│   └── generate-media-metadata.mjs
+├── registry.json           # Registry manifest consumed by `shadcn build`
+├── components.json         # shadcn config for this project (style, aliases, ...)
+├── next.config.mjs         # Next.js config (Fumadocs MDX wiring)
+├── source.config.ts        # Fumadocs MDX config + frontmatter schema
+├── vitest.config.ts        # Vitest config (Node env, registry-only includes)
+└── eslint.config.mjs
 ```
 
-## Contributing
+`@/*` is a TypeScript path alias for the repo root (see `tsconfig.json`), so imports like `@/components/...` and `@/registry/ui/...` resolve from anywhere in the project.
 
-### Adding a New Component
+## Working on components
 
-1. Create your component in `registry/ui/`
-2. Add an entry to `registry.json` with metadata and dependencies
-4. Add documentation in `content/docs/`
-5. Build the registry to generate JSON payloads
+Components are authored under `registry/ui/`, with optional demo pages under `registry/blocks/`. The flow for adding or changing a component is:
 
-The generated payloads in `public/r/` are automatically included in your deployment, allowing consumers to install components via the shadcn CLI.
+1. **Add the source** in `registry/ui/<component>/...` (and a demo in `registry/blocks/` if useful).
+2. **Register it** in [`registry.json`](registry.json): give it a `name`, runtime `dependencies`, any `registryDependencies` (other shadcn components it relies on), and the list of `files` to ship along with their install `target` paths.
+3. **Document it** by adding an MDX file under `content/docs/`. Frontmatter is validated by the Zod schema in `source.config.ts` (`title`, `description`, `tags`, `image`, `date`, etc.).
+4. **Rebuild the registry** with `pnpm registry:build`. This regenerates the JSON in `public/r/` so consumers can `shadcn add` the new component once deployed.
+5. **Test** with `pnpm test` (see below).
+
+`components.json` configures shadcn for this project: `new-york` style, RSC + TSX enabled, and the standard `@/components`, `@/components/ui`, `@/lib`, `@/lib/utils`, `@/hooks` aliases.
+
+## Documentation site
+
+Docs are MDX files under `content/docs/`, loaded via Fumadocs (`lib/source.ts`) and rendered by `app/docs/[[...slug]]/page.tsx`. The docs page is statically generated (`dynamic = "force-static"`, `dynamicParams = false`), so adding a new MDX file under `content/docs/` is enough to make it appear after a rebuild.
+
+Custom MDX components (e.g. `<Preview>`) are wired up in `components/mdx-components.tsx`. Code blocks are highlighted via `rehype-pretty-code` + Shiki, configured in `source.config.ts`.
 
 ## Testing
 
-```bash
-# Run tests
-pnpm test
+The test runner is [Vitest](https://vitest.dev). `vitest.config.ts` only collects tests from `registry/**` (matching `*.test.ts(x)` / `*.spec.ts(x)`) and runs them in the `node` environment. Existing tests live alongside the diff viewer:
 
-# Run tests in watch mode
-pnpm test:watch
 ```
+registry/ui/diff/__tests__/
+├── insert-skip.test.ts
+├── parse-diff.test.ts
+├── parse-word-diff.test.ts
+└── to-word-diff.test.ts
+```
+
+Run them with:
+
+```bash
+pnpm test          # one-off
+pnpm test:watch    # rerun on change
+pnpm test:ui       # browser UI
+```
+
+Coverage is configured to use the V8 provider; run `pnpm test --coverage` to produce a report.
+
+## Media metadata (pre-commit hook)
+
+Husky installs a pre-commit hook (`.husky/pre-commit`) that runs `node scripts/generate-media-metadata.mjs` and stages `public/media-metadata.json` if it changed. The script scans `public/` for images and videos and writes aspect ratios plus tiny base64 blur placeholders consumed by the lazy-loading `<Video>` / media components.
+
+Caveats worth knowing:
+
+- Videos are processed with `ffprobe` + `ffmpeg`; install them if you add new video assets.
+- Images are processed with `sips`, which ships with macOS. On Linux/Windows the image branch will fail; the script logs the error and skips that file rather than aborting, so commits still succeed but image entries won't be generated.
+- You can run the script manually any time with `pnpm generate:media-meta`.
+
+## Deployment
+
+The site is a standard Next.js app and deploys cleanly on Vercel (the registry is published from `https://ui.fredrika.dev/r/<name>.json`). `pnpm build` produces the production bundle; the generated `public/r/*.json` files are committed/built artifacts that ship alongside the site so the shadcn CLI can fetch them.
+
+## Troubleshooting
+
+- **`pnpm install` fails on peer-deps for `@types/react`** — this repo pins `@types/react` and `@types/react-dom` to `19.1.2` via `pnpm.overrides`. Make sure you're using pnpm (not npm/yarn), which honors those overrides.
+- **`shadcn build` produces stale JSON** — delete `public/r/` and re-run `pnpm registry:build`.
+- **Pre-commit hook didn't run** — re-run `pnpm install` (this triggers `husky` via `prepare`) or `pnpm exec husky` to reinstall hooks.
+- **Image entries missing from `media-metadata.json` on Linux** — see the macOS `sips` caveat above; it's expected.
+
+## License
+
+[MIT](LICENSE) © Fredrika Lindh.
