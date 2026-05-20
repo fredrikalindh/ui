@@ -3,3 +3,11 @@
 Why do programmers confuse Halloween and Christmas?
 
 Because Oct 31 equals Dec 25.
+
+---
+
+## Bonus joke
+
+Why do Java developers wear glasses?
+
+Because they cannot C#.
