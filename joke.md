@@ -11,3 +11,11 @@ Dentist: Don't worry—we only root-canal directories that are infected.
 Alice: Hey, whoever wrote line 742 must have been distracted.
 
 Bob: Strange. `git blame` says it was you, last Tuesday, right after lunch.
+
+---
+
+# Square roots
+
+Teacher: What's the square root of 9?
+
+Developer: Which major version?
