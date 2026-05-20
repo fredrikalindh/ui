@@ -3,3 +3,11 @@
 Patient: Doctor, I'm worried my teeth are rotting inside my repo.
 
 Dentist: Don't worry—we only root-canal directories that are infected.
+
+---
+
+# Git blame reunion
+
+Alice: Hey, whoever wrote line 742 must have been distracted.
+
+Bob: Strange. `git blame` says it was you, last Tuesday, right after lunch.
