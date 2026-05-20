@@ -27,3 +27,11 @@ Developer: Which major version?
 Marketing: Let's launch version 11.0. Double digits grab attention!
 
 Engineering: Attention is nice, but the rules still say semver.
+
+---
+
+# Friday deploy
+
+Teammate: Can we ship Friday evening?
+
+Ops: Only if Monday volunteered for overtime first.
