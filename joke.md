@@ -19,3 +19,11 @@ Bob: Strange. `git blame` says it was you, last Tuesday, right after lunch.
 Teacher: What's the square root of 9?
 
 Developer: Which major version?
+
+---
+
+# Semantic buzz
+
+Marketing: Let's launch version 11.0. Double digits grab attention!
+
+Engineering: Attention is nice, but the rules still say semver.
