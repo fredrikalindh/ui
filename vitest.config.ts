@@ -13,7 +13,13 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    include: ["registry/**/*.test.ts", "registry/**/*.test.tsx", "registry/**/*.spec.ts", "registry/**/*.spec.tsx"],
+    include: [
+      "lib/**/*.test.ts",
+      "registry/**/*.test.ts",
+      "registry/**/*.test.tsx",
+      "registry/**/*.spec.ts",
+      "registry/**/*.spec.tsx",
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],

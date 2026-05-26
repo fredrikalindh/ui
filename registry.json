@@ -116,6 +116,44 @@
           "target": "components/ui/button.tsx"
         }
       ]
+    },
+    {
+      "name": "markdown-doc-editor",
+      "type": "registry:component",
+      "title": "Markdown Doc Editor",
+      "description": "Preview/markdown toggle with interactive GFM task list checkboxes",
+      "dependencies": ["react-markdown", "remark-gfm", "@radix-ui/react-checkbox"],
+      "registryDependencies": [
+        "button",
+        "https://ui.fredrika.dev/r/button.json"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/markdown-doc-editor.tsx",
+          "type": "registry:component",
+          "target": "components/ui/markdown-doc-editor.tsx"
+        },
+        {
+          "path": "lib/markdown-task-list.ts",
+          "type": "registry:lib",
+          "target": "lib/markdown-task-list.ts"
+        },
+        {
+          "path": "lib/utils.ts",
+          "type": "registry:lib",
+          "target": "lib/utils.ts"
+        },
+        {
+          "path": "components/ui/checkbox.tsx",
+          "type": "registry:component",
+          "target": "components/ui/checkbox.tsx"
+        },
+        {
+          "path": "registry/blocks/markdown-doc-editor/demo.tsx",
+          "type": "registry:component",
+          "target": "components/blocks/markdown-doc-editor/demo.tsx"
+        }
+      ]
     }
   ]
 }
