@@ -12,6 +12,7 @@ import { CodeTabs } from "./code-tabs";
 import { getIconForLanguageExtension } from "./icons";
 import { ExampleCard } from "./example-card";
 import { LinkPreviewServer } from "./link-preview-server";
+import { MarkdownTaskListInput } from "./markdown-task-list-input";
 
 export const mdxComponents = {
   h1: ({ className, ...props }: React.ComponentProps<"h1">) => (
@@ -126,6 +127,7 @@ export const mdxComponents = {
       {...props}
     />
   ),
+  input: MarkdownTaskListInput,
   blockquote: ({ className, ...props }: React.ComponentProps<"blockquote">) => (
     <blockquote
       className={cn("mt-6 border-l-2 pl-6 italic", className)}
